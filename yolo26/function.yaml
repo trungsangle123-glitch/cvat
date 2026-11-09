@@ -1,0 +1,62 @@
+metadata:
+  name: ultralytics-yolo26
+  namespace: cvat
+  annotations:
+    name: YOLO26
+    version: 1
+    type: detector
+    framework: pytorch
+    spec: |
+      [
+        { "id": 0, "name": "car", "type": "rectangle" },
+        { "id": 1, "name": "truck", "type": "rectangle" },
+        { "id": 2, "name": "bus", "type": "rectangle" },
+        { "id": 3, "name": "van", "type": "rectangle" }
+      ]
+
+spec:
+  description: Ultralytics YOLO26 vehicle detector (car, truck, bus, van)
+  runtime: 'python:3.10'
+  handler: main:handler
+  eventTimeout: 60s
+  env:
+    - name: MODEL_PATH
+      value: /opt/nuclio/yolo26n-objv1-150.pt
+    - name: DEVICE
+      value: cpu
+    - name: TARGET_LABELS
+      value: car,truck,bus,van
+
+  build:
+    image: cvat.ultralytics.yolo26
+    baseImage: python:3.10-slim
+    directives:
+      preCopy:
+        - kind: RUN
+          value: apt-get update && apt-get install -y --no-install-recommends libgl1 libglib2.0-0 libgomp1 && rm -rf /var/lib/apt/lists/*
+        - kind: RUN
+          value: pip install --no-cache-dir typing-extensions filelock
+        - kind: RUN
+          value: pip install --no-cache-dir torch torchvision --index-url https://download.pytorch.org/whl/cpu --extra-index-url https://pypi.org/simple
+        - kind: RUN
+          value: pip install --no-cache-dir ultralytics pillow pyyaml
+        - kind: WORKDIR
+          value: /opt/nuclio
+        - kind: RUN
+          value: python -c "from ultralytics import YOLO; YOLO('yolo26n-objv1-150.pt')"
+
+  triggers:
+    myHttpTrigger:
+      numWorkers: 1
+      kind: 'http'
+      workerAvailabilityTimeoutMilliseconds: 10000
+      attributes:
+        maxRequestBodySize: 33554432 # 32MB
+
+  platform:
+    attributes:
+      restartPolicy:
+        name: always
+        maximumRetryCount: 3
+      mountMode: volume
+      network: cvat_cvat
