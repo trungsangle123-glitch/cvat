@@ -11,7 +11,7 @@
 | `bus` | Xe chở khách cỡ lớn, thân dài, nhiều cửa sổ dọc thân, từ khoảng 17 chỗ trở lên. | Xe buýt thành phố, xe khách đường dài, xe giường nằm, xe đưa đón nhân viên/học sinh cỡ lớn. **Phân biệt:** dài và cao hơn `van` rõ rệt, hàng cửa sổ liên tục. |
 | `van` | Xe thân hộp liền khối, cỡ vừa, chở người hoặc hàng nhẹ, tối đa khoảng 16 chỗ. | Ford Transit, Hyundai Solati, minivan/MPV, xe van chở hàng (cửa hông trượt, không có cửa sổ phía sau). **Phân biệt:** cabin liền thân, mui cao, ngắn hơn `bus`. |
 
-## Quy tắc chung 
+## Quy tắc chung
 
 - **Box bám sát vật thể nghĩa là:** hình chữ nhật nhỏ nhất bao trọn phần thân xe nhìn thấy được, các cạnh chạm sát mép ngoài cùng (bao gồm cả gương chiếu hậu, cản, thùng hàng, rơ-moóc). Không để dư viền trống quá 2 đến 3 pixel, không bao bóng đổ, phản chiếu, người đứng cạnh hay hàng hóa chìa ra quá xa khỏi thùng.
 - **Vật thể bị che khuất:** Chỉ vẽ box quanh **phần nhìn thấy**, không đoán phần bị khuất.
@@ -31,6 +31,6 @@
 
 | Ảnh | Tình huống | Quyết định cuối | Lý do theo schema |
 | --- | --- | --- | --- |
-| `drive_...` | | | |
-| `drive_...` | | | |
-| `drive_...` | | | |
+| `drive_005.jpg` | Quá nhiều xe ở phía xa chồng lên nhau nên khó annotate| annotate 1 phần những xe ở gần có thể nhìn thấy, ở xa thì bỏ qua | có scheam là `car` |
+| `drive_004.jpg` | có nhiều loại xe khác và có cả người đi bộ , xe đạp | annotate 1 phần theo đúng schema, những cái nào không có thì không annotate | có schema là `car` |
+| `drive_031.jpg` | có cả biển báo giao thông , nhưng không thuộc schema | annotate những thứ thuộc schema | có schema là `car`, `van`   |
