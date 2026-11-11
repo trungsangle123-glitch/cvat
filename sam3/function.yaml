@@ -13,7 +13,7 @@ metadata:
 
 spec:
   description: Interactive object segmentation with SAM 3
-  runtime: 'python:3.12'
+  runtime: 'python:3.10'
   handler: main:handler
   eventTimeout: 180s
   env:
@@ -26,13 +26,13 @@ spec:
 
   build:
     image: cvat.pth.facebookresearch.sam3
-    baseImage: python:3.12-slim
+    baseImage: python:3.10-slim
     directives:
       preCopy:
         - kind: RUN
           value: apt-get update && apt-get install -y --no-install-recommends git curl libgl1 libglib2.0-0 libgomp1 && rm -rf /var/lib/apt/lists/*
         - kind: RUN
-          value: pip install --no-cache-dir torch torchvision --index-url https://download.pytorch.org/whl/cpu
+          value: pip install --no-cache-dir torch torchvision --extra-index-url https://download.pytorch.org/whl/cpu
         - kind: RUN
           value: pip install --no-cache-dir setuptools "git+https://github.com/facebookresearch/sam3.git" scikit-image pillow
         - kind: WORKDIR
@@ -49,9 +49,14 @@ spec:
         # SAM 3 precomputes position-encoding caches on "cuda" unconditionally,
         # which crashes model construction on CPU-only hosts.
         - kind: RUN
-          value: sed -i 's|torch.zeros((1, 1) + size, device="cuda")|torch.zeros((1, 1) + size, device="cuda" if torch.cuda.is_available() else "cpu")|' /usr/local/lib/python3.12/site-packages/sam3/model/position_encoding.py
+          value: sed -i 's|torch.zeros((1, 1) + size, device="cuda")|torch.zeros((1, 1) + size, device="cuda" if torch.cuda.is_available() else "cpu")|' /usr/local/lib/python3.10/site-packages/sam3/model/position_encoding.py
         - kind: RUN
-          value: sed -i 's|feat_size, feat_size, device="cuda"|feat_size, feat_size, device="cuda" if torch.cuda.is_available() else "cpu"|' /usr/local/lib/python3.12/site-packages/sam3/model/decoder.py
+          value: sed -i 's|feat_size, feat_size, device="cuda"|feat_size, feat_size, device="cuda" if torch.cuda.is_available() else "cpu"|' /usr/local/lib/python3.10/site-packages/sam3/model/decoder.py
+        # perflib's addmm_act hard-casts to bfloat16 (a CUDA-only optimization)
+        # which breaks fp32 CPU inference in the ViT blocks. Use the plain
+        # fc1+GELU path instead.
+        - kind: RUN
+          value: sed -i 's|x = addmm_act(type(self.act), self.fc1, x)|x = self.act(self.fc1(x))|' /usr/local/lib/python3.10/site-packages/sam3/model/vitdet.py
 
   triggers:
     myHttpTrigger:

@@ -40,6 +40,13 @@ class ModelHandler:
             load_from_HF=False,
             enable_inst_interactivity=True,
         )
+        # The inst-interactivity tracker is built without a backbone on
+        # purpose; it shares the main model's VL backbone (see the official
+        # SAM 3 notebooks). Assign it before use:
+        self.model.inst_interactive_predictor.model.backbone = self.model.backbone
+        # Checkpoint weights are bfloat16; cast everything to float32 so CPU
+        # inference doesn't hit "mat1 and mat2 must have the same dtype".
+        self.model = self.model.float()
         self.predictor = self.model.inst_interactive_predictor
         self.latest_image_hash = None
 
