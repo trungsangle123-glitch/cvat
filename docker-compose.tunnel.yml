@@ -1,0 +1,16 @@
+# Public access over a Cloudflare (quick) tunnel.
+# Adds the CSRF trusted-origins configuration to the API server.
+#
+# Usage:
+#   docker compose -f docker-compose.yml \
+#     -f components/serverless/docker-compose.serverless.yml \
+#     -f docker-compose.tunnel.yml up -d
+
+services:
+  cvat_server:
+    environment:
+      DJANGO_SETTINGS_MODULE: cvat.settings.tunnel
+      CVAT_CSRF_TRUSTED_ORIGINS: ${CVAT_CSRF_TRUSTED_ORIGINS:-https://*.trycloudflare.com}
+    volumes:
+      # Mount the local settings package over the one baked into the image
+      - ./cvat/settings:/opt/cvat/cvat/settings:ro

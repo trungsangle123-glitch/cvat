@@ -6,7 +6,7 @@ $cf = "C:\Program Files (x86)\cloudflared\cloudflared.exe"
 
 Write-Host "== Starting CVAT containers..." -ForegroundColor Cyan
 Push-Location "D:\Vinuni\cvat-day2"
-docker compose -f docker-compose.yml -f components/serverless/docker-compose.serverless.yml up -d
+docker compose -f docker-compose.yml -f components/serverless/docker-compose.serverless.yml -f docker-compose.serverless.override.yml -f docker-compose.tunnel.yml up -d
 Pop-Location
 
 Write-Host "== Waiting for CVAT web UI..." -ForegroundColor Cyan

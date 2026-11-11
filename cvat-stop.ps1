@@ -7,7 +7,7 @@ Write-Host "   Tunnel closed (trycloudflare URL is now dead)."
 
 Write-Host "== Stopping CVAT containers..." -ForegroundColor Cyan
 Push-Location "D:\Vinuni\cvat-day2"
-docker compose -f docker-compose.yml -f components/serverless/docker-compose.serverless.yml stop
+docker compose -f docker-compose.yml -f components/serverless/docker-compose.serverless.yml -f docker-compose.serverless.override.yml -f docker-compose.tunnel.yml stop
 Pop-Location
 
 Write-Host ""
