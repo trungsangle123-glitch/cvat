@@ -46,9 +46,10 @@ Once ready, the model appears in CVAT as **YOLO26** in
 4. Re-run `deploy.sh`. The model is copied into the image from this folder.
 
 `TARGET_LABELS` in `function.yaml` controls which labels are returned. With the
-default Objects365 checkpoint, `suv`/`sports car`/`race car` are folded into
-`car`, and `pickup truck`/`fire truck` into `truck`; all other classes are
-discarded.
+default Objects365 checkpoint, `suv`/`sports car`/`race car`/`taxi`/`pickup truck`
+are folded into `car`, `minibus` into `bus`, `minivan` into `van`, and
+`tractor`/`tractor trailer`/`fire truck`/`heavy truck` into `truck`; all other
+classes are discarded.
 
 ## GPU
 

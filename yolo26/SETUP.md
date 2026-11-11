@@ -72,6 +72,7 @@ wsl -d Ubuntu
 Then:
 
 ```bash
+sanglt5@DESKTOP-C9F73BV:/mnt/d/Vinuni/cvat-day2$ NUCTL=~/bin/nuctl-1.16.3 bash yolo26/deploy.sh
 cd /mnt/d/Vinuni/cvat-day2
 NUCTL=~/bin/nuctl-1.16.3 bash yolo26/deploy.sh
 ```
