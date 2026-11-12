@@ -1,0 +1,36 @@
+# SAM 3 on Google Colab: compose override.
+#
+# Adds a gateway container that multiplexes the local Nuclio dashboard and a
+# SAM 3 server running on Google Colab, and points CVAT's lambda manager at it.
+#
+# Set the Colab tunnel URL in sam3/colab/.env (COLAB_FUNCTION_URL=...) and run:
+#   docker compose -f docker-compose.yml \
+#     -f components/serverless/docker-compose.serverless.yml \
+#     -f docker-compose.sam3-colab.yml --env-file sam3/colab/.env up -d
+
+services:
+  sam3_colab_gateway:
+    container_name: sam3_colab_gateway
+    build: ./sam3/colab/gateway
+    environment:
+      LOCAL_NUCLIO_URL: http://nuclio:8070
+      COLAB_FUNCTION_URL: ${COLAB_FUNCTION_URL:-}
+      COLAB_FUNCTION_ID: pth-facebookresearch-sam3-colab
+      COLAB_TIMEOUT: "300"
+    restart: always
+    networks:
+      - cvat
+
+  cvat_server:
+    environment:
+      CVAT_NUCLIO_HOST: sam3_colab_gateway
+      CVAT_NUCLIO_PORT: 8070
+      CVAT_NUCLIO_INVOKE_METHOD: dashboard
+      CVAT_NUCLIO_DEFAULT_TIMEOUT: "300"
+
+  cvat_worker_annotation:
+    environment:
+      CVAT_NUCLIO_HOST: sam3_colab_gateway
+      CVAT_NUCLIO_PORT: 8070
+      CVAT_NUCLIO_INVOKE_METHOD: dashboard
+      CVAT_NUCLIO_DEFAULT_TIMEOUT: "300"
