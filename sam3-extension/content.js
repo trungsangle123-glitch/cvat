@@ -23,6 +23,7 @@
     sam3Url: 'http://localhost:58218/',
     timeoutMs: 180000,
     mode: 'point',
+    shape: 'polygon',
     labelId: null,
     autoReload: false,
   };
@@ -31,6 +32,8 @@
     cfg: { ...DEFAULTS },
     jobId: null,
     labels: [],
+    allLabels: [],
+    labelsError: '',
     labelError: '',
     enabled: false,
     busy: false,
@@ -187,18 +190,38 @@
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
-      const all = Array.isArray(data) ? data : data.results || [];
-      const maskable = all.filter((l) => ['any', 'mask'].includes(String(l.type || 'any')));
-      state.labels = maskable.length ? maskable : all;
-      state.labelError = maskable.length
-        ? ''
-        : 'No label accepts masks. Add a "mask" or "any" label in CVAT.';
+      state.allLabels = Array.isArray(data) ? data : data.results || [];
+      state.labelsError = '';
     } catch (e) {
+      state.allLabels = [];
       state.labels = [];
-      state.labelError = `Cannot read job labels: ${e.message}`;
+      state.labelsError = `Cannot read job labels: ${e.message}`;
     }
-    renderLabelSelect();
+    applyLabelFilter();
     renderMeta();
+  }
+
+  // Labels CVAT will accept for the currently selected shape type.
+  function shapeLabelTypes(shape) {
+    return shape === 'mask' ? ['mask', 'any'] : ['polygon', 'any'];
+  }
+
+  function applyLabelFilter() {
+    if (state.labelsError) {
+      state.labels = [];
+      state.labelError = state.labelsError;
+      renderLabelSelect();
+      return;
+    }
+
+    const shape = state.cfg.shape === 'mask' ? 'mask' : 'polygon';
+    const allowed = shapeLabelTypes(shape);
+    const usable = state.allLabels.filter((l) => allowed.includes(String(l.type || 'any')));
+    state.labels = usable;
+    state.labelError = usable.length
+      ? ''
+      : `No ${shape} label in this job. Add a label of type "${shape}" (or "any") in CVAT.`;
+    renderLabelSelect();
   }
 
   function effectiveLabelId() {
@@ -223,30 +246,358 @@
    * Writing annotations back to CVAT
    * ------------------------------------------------------------------ */
 
+  /* --- mask -> polygon (testable block) --- */
+
+  // SAM 3 returns an RLE mask. To write polygons we trace the exact boundary of
+  // that mask along pixel corners, simplify it (Douglas-Peucker) and round.
+  // CVAT polygons cannot hold holes, so background islands fully surrounded by
+  // the mask are filled before tracing.
+
+  const POLYGON_EPSILON = 1.5; // px
+  const MIN_POLYGON_AREA = 12; // px^2
+
+  // CVAT mask points: run lengths (starting with a background run) then the
+  // mask bounding box as [left, top, right, bottom].
+  function decodeMaskPoints(points, width, height) {
+    if (!Array.isArray(points) || points.length < 5 || !width || !height) return null;
+
+    let left = 0;
+    let top = 0;
+    let right = width - 1;
+    let bottom = height - 1;
+    const bbox = points.slice(-4).map(Number);
+    if (bbox.length === 4 && bbox.every(Number.isFinite) && bbox[2] >= bbox[0] && bbox[3] >= bbox[1]) {
+      left = bbox[0];
+      top = bbox[1];
+      right = bbox[2];
+      bottom = bbox[3];
+    }
+
+    left = Math.max(0, Math.round(left));
+    top = Math.max(0, Math.round(top));
+    right = Math.min(width - 1, Math.round(right));
+    bottom = Math.min(height - 1, Math.round(bottom));
+
+    const gw = right - left + 1;
+    const gh = bottom - top + 1;
+    if (gw <= 0 || gh <= 0) return null;
+
+    const total = gw * gh;
+    const grid = new Uint8Array(total);
+    const runs = points.slice(0, points.length - 4);
+    let idx = 0;
+    let on = 0;
+    for (let i = 0; i < runs.length && idx < total; i += 1) {
+      const count = Math.round(Number(runs[i]));
+      if (!Number.isFinite(count) || count <= 0) {
+        on ^= 1;
+        continue;
+      }
+      const end = Math.min(total, idx + count);
+      if (on) grid.fill(1, idx, end);
+      idx = end;
+      on ^= 1;
+    }
+
+    return { grid, left, top, width: gw, height: gh };
+  }
+
+  // Fill background regions that are not reachable from the grid border.
+  function fillMaskHoles(grid, width, height) {
+    const seen = new Uint8Array(width * height);
+    const queue = [];
+    const push = (x, y) => {
+      if (x < 0 || y < 0 || x >= width || y >= height) return;
+      const i = y * width + x;
+      if (grid[i] || seen[i]) return;
+      seen[i] = 1;
+      queue.push(i);
+    };
+
+    for (let x = 0; x < width; x += 1) {
+      push(x, 0);
+      push(x, height - 1);
+    }
+    for (let y = 0; y < height; y += 1) {
+      push(0, y);
+      push(width - 1, y);
+    }
+
+    while (queue.length) {
+      const i = queue.pop();
+      const x = i % width;
+      const y = (i - x) / width;
+      push(x - 1, y);
+      push(x + 1, y);
+      push(x, y - 1);
+      push(x, y + 1);
+    }
+
+    for (let i = 0; i < grid.length; i += 1) {
+      if (!grid[i] && !seen[i]) grid[i] = 1;
+    }
+  }
+
+  // Exact mask boundary: every exposed side of a foreground pixel becomes a
+  // directed unit edge with the foreground on its left, and the edges are
+  // chained into closed loops. Vertices sit on pixel corners (integer
+  // coordinates), so a filled rectangle comes out as its exact outline.
+  function traceMaskLoops(grid, width, height) {
+    const inside = (x, y) =>
+      x >= 0 && y >= 0 && x < width && y < height && grid[y * width + x] === 1;
+
+    const stride = width + 2;
+    const vkey = (x, y) => y * stride + x;
+
+    // Directions: 0 = right, 1 = down, 2 = left, 3 = up (clockwise on screen).
+    const outgoing = new Map();
+    const addEdge = (x1, y1, x2, y2, dir) => {
+      const k = vkey(x1, y1);
+      const edge = { x: x2, y: y2, dir, used: false };
+      const list = outgoing.get(k);
+      if (list) list.push(edge);
+      else outgoing.set(k, [edge]);
+    };
+
+    for (let y = 0; y < height; y += 1) {
+      for (let x = 0; x < width; x += 1) {
+        if (grid[y * width + x] !== 1) continue;
+        // Clockwise screen order keeps the foreground on the left of each edge.
+        if (!inside(x, y - 1)) addEdge(x, y, x + 1, y, 0); // top
+        if (!inside(x + 1, y)) addEdge(x + 1, y, x + 1, y + 1, 1); // right
+        if (!inside(x, y + 1)) addEdge(x + 1, y + 1, x, y + 1, 2); // bottom
+        if (!inside(x - 1, y)) addEdge(x, y + 1, x, y, 3); // left
+      }
+    }
+
+    const loops = [];
+    for (const [startKey, startEdges] of outgoing) {
+      for (const startEdge of startEdges) {
+        if (startEdge.used) continue;
+
+        const loop = [];
+        let key = startKey;
+        let edge = startEdge;
+        while (edge && !edge.used) {
+          edge.used = true;
+          const x = key % stride;
+          loop.push([x, (key - x) / stride]);
+
+          const nextKey = vkey(edge.x, edge.y);
+          const candidates = (outgoing.get(nextKey) || []).filter((e) => !e.used);
+          if (!candidates.length) break;
+
+          let next = null;
+          if (candidates.length === 1) {
+            next = candidates[0];
+          } else {
+            // Diagonal pixels touch at a vertex: turn clockwise so each pixel
+            // keeps its own loop instead of crossing over into the other.
+            const want = (edge.dir + 1) % 4;
+            next = candidates.find((e) => e.dir === want) || candidates[0];
+          }
+
+          key = nextKey;
+          edge = next;
+        }
+
+        if (loop.length >= 3) loops.push(loop);
+      }
+    }
+
+    return loops;
+  }
+
+  // Douglas-Peucker on an open polyline (endpoints are always kept).
+  function simplifyLoop(points, epsilon) {
+    if (points.length <= 3) return points;
+
+    const keep = new Uint8Array(points.length);
+    keep[0] = 1;
+    keep[points.length - 1] = 1;
+
+    const eps2 = epsilon * epsilon;
+    const stack = [[0, points.length - 1]];
+    while (stack.length) {
+      const [first, last] = stack.pop();
+      const [x1, y1] = points[first];
+      const [x2, y2] = points[last];
+      const dx = x2 - x1;
+      const dy = y2 - y1;
+      const len2 = dx * dx + dy * dy;
+
+      let maxDist = -1;
+      let index = -1;
+      for (let i = first + 1; i < last; i += 1) {
+        const [px, py] = points[i];
+        let dist;
+        if (len2 === 0) {
+          const ex = px - x1;
+          const ey = py - y1;
+          dist = ex * ex + ey * ey;
+        } else {
+          let t = ((px - x1) * dx + (py - y1) * dy) / len2;
+          t = Math.max(0, Math.min(1, t));
+          const ex = px - (x1 + t * dx);
+          const ey = py - (y1 + t * dy);
+          dist = ex * ex + ey * ey;
+        }
+        if (dist > maxDist) {
+          maxDist = dist;
+          index = i;
+        }
+      }
+
+      if (maxDist > eps2 && index > first) {
+        keep[index] = 1;
+        stack.push([first, index], [index, last]);
+      }
+    }
+
+    return points.filter((_, i) => keep[i]);
+  }
+
+  // Closed-loop simplification: split the ring into two arcs at two extreme
+  // vertices, simplify each, then join. Simplifying the ring as an open
+  // polyline would treat the seam as a real edge and can cut large corners.
+  function simplifyClosedLoop(points, epsilon) {
+    const n = points.length;
+    if (n <= 4) return points.slice();
+
+    let cx = 0;
+    let cy = 0;
+    for (const [x, y] of points) {
+      cx += x;
+      cy += y;
+    }
+    cx /= n;
+    cy /= n;
+
+    let ia = 0;
+    let best = -1;
+    for (let i = 0; i < n; i += 1) {
+      const dx = points[i][0] - cx;
+      const dy = points[i][1] - cy;
+      const dist = dx * dx + dy * dy;
+      if (dist > best) {
+        best = dist;
+        ia = i;
+      }
+    }
+
+    let ib = 0;
+    best = -1;
+    for (let i = 0; i < n; i += 1) {
+      const dx = points[i][0] - points[ia][0];
+      const dy = points[i][1] - points[ia][1];
+      const dist = dx * dx + dy * dy;
+      if (dist > best) {
+        best = dist;
+        ib = i;
+      }
+    }
+
+    if (ia === ib) return points.slice();
+
+    const arc = (from, to) => {
+      const out = [];
+      for (let i = from; ; i = (i + 1) % n) {
+        out.push(points[i]);
+        if (i === to) break;
+      }
+      return out;
+    };
+
+    const a1 = simplifyLoop(arc(ia, ib), epsilon);
+    const a2 = simplifyLoop(arc(ib, ia), epsilon);
+    return a1.slice(0, -1).concat(a2.slice(0, -1));
+  }
+
+  function polygonArea(points) {
+    let sum = 0;
+    for (let i = 0, j = points.length - 1; i < points.length; j = i, i += 1) {
+      sum += (points[j][0] + points[i][0]) * (points[j][1] - points[i][1]);
+    }
+    return sum / 2;
+  }
+
+  // Flat [x1, y1, x2, y2, ...] polygons ready for CVAT.
+  function maskToPolygons(points, width, height, epsilon) {
+    const mask = decodeMaskPoints(points, width, height);
+    if (!mask) return [];
+
+    fillMaskHoles(mask.grid, mask.width, mask.height);
+    const loops = traceMaskLoops(mask.grid, mask.width, mask.height);
+    const eps = Number.isFinite(epsilon) ? epsilon : POLYGON_EPSILON;
+    const polygons = [];
+
+    for (const loop of loops) {
+      // Boundary loops already follow pixel corners, so map them into image
+      // coordinates and simplify, keeping the exact outline for rectangles.
+      const mapped = [];
+      for (const [x, y] of loop) {
+        const px = Math.min(width, Math.max(0, Math.round(x + mask.left)));
+        const py = Math.min(height, Math.max(0, Math.round(y + mask.top)));
+        const last = mapped[mapped.length - 1];
+        if (last && last[0] === px && last[1] === py) continue;
+        mapped.push([px, py]);
+      }
+      if (mapped.length < 3) continue;
+
+      const simplified = simplifyClosedLoop(mapped, eps);
+      if (simplified.length < 3) continue;
+      if (Math.abs(polygonArea(simplified)) < MIN_POLYGON_AREA) continue;
+      polygons.push(simplified.flat());
+    }
+
+    return polygons;
+  }
+
+  /* --- end mask -> polygon --- */
+
   async function applyShapes(shapes, imgW, imgH) {
     if (!state.jobId) throw new Error('No job detected in the URL.');
     const labelId = effectiveLabelId();
     if (!labelId) throw new Error(state.labelError || 'No label selected.');
 
+    const shapeMode = state.cfg.shape === 'mask' ? 'mask' : 'polygon';
     const frame = currentFrame();
+    const created = [];
+
+    for (const s of shapes) {
+      if (!Array.isArray(s.points) || s.points.length <= 4) continue;
+      if (shapeMode === 'polygon') {
+        for (const points of maskToPolygons(s.points, imgW, imgH)) {
+          created.push({ type: 'polygon', points });
+        }
+      } else {
+        created.push({ type: s.type || 'mask', points: s.points });
+      }
+    }
+
+    if (!created.length) {
+      throw new Error(
+        shapeMode === 'polygon'
+          ? 'Model mask is too small/thin to turn into a polygon — switch to Mask mode.'
+          : 'Model returned no usable mask.',
+      );
+    }
+
     const body = {
-      shapes: shapes
-        .filter((s) => Array.isArray(s.points) && s.points.length > 4)
-        .map((s) => ({
-          type: s.type || 'mask',
-          frame,
-          label_id: labelId,
-          occluded: false,
-          outside: false,
-          z_order: 0,
-          group: 0,
-          rotation: 0,
-          source: 'semi-auto',
-          attributes: Array.isArray(s.attributes) ? s.attributes : [],
-          points: s.points,
-        })),
+      shapes: created.map((s) => ({
+        type: s.type,
+        frame,
+        label_id: labelId,
+        occluded: false,
+        outside: false,
+        z_order: 0,
+        group: 0,
+        rotation: 0,
+        source: 'semi-auto',
+        attributes: [],
+        points: s.points,
+      })),
     };
-    if (!body.shapes.length) throw new Error('Model returned no usable mask.');
 
     const res = await fetch(`/api/jobs/${state.jobId}/annotations/?action=create`, {
       method: 'PATCH',
@@ -261,79 +612,72 @@
     }
 
     const color = labelColor(labelId);
-    for (const s of body.shapes) drawMaskPreview(s.points, imgW, imgH, color);
+    for (const s of body.shapes) {
+      if (s.type === 'polygon') drawPolygonPreview(s.points, color);
+      else drawMaskPreview(s.points, imgW, imgH, color);
+    }
     state.added += body.shapes.length;
     renderMeta();
 
     if (state.cfg.autoReload) scheduleReload();
   }
 
-  // CVAT mask RLE: run lengths (starting with a background run) then the mask
-  // bounding box as [left, top, right, bottom].
-  function drawMaskPreview(points, fallbackW, fallbackH, color) {
+  function ensureOverlay(w, h) {
     const ui = state.ui;
-    if (!ui) return;
-
-    const el = bgCanvas();
-    const w = el ? el.width : fallbackW;
-    const h = el ? el.height : fallbackH;
-    if (!w || !h) return;
-
+    if (!ui) return null;
     const ov = ui.overlay;
     if (ov.width !== w || ov.height !== h) {
       ov.width = w;
       ov.height = h;
     }
-    const ctx = ov.getContext('2d');
+    return ov.getContext('2d');
+  }
 
-    const bbox = points.slice(-4);
-    let left;
-    let top;
-    let right;
-    let bottom;
-    if (bbox.length === 4 && points.length > 4 && bbox[2] >= bbox[0] && bbox[3] >= bbox[1]) {
-      [left, top, right, bottom] = bbox.map((n) => Math.round(n));
-    } else {
-      left = 0;
-      top = 0;
-      right = w - 1;
-      bottom = h - 1;
-    }
+  function drawMaskPreview(points, fallbackW, fallbackH, color) {
+    const el = bgCanvas();
+    const w = el ? el.width : fallbackW;
+    const h = el ? el.height : fallbackH;
+    if (!w || !h) return;
 
-    const rle = points.slice(0, points.length - 4);
-    const mw = right - left + 1;
-    const mh = bottom - top + 1;
-    if (mw <= 0 || mh <= 0) return;
+    const mask = decodeMaskPoints(points, w, h);
+    const ctx = ensureOverlay(w, h);
+    if (!mask || !ctx) return;
 
-    const total = mw * mh;
-    const img = ctx.createImageData(mw, mh);
+    const img = ctx.createImageData(mask.width, mask.height);
     const data = img.data;
     const [r, g, b] = color;
-
-    let idx = 0;
-    let on = 0;
-    for (let i = 0; i < rle.length && idx < total; i += 1) {
-      const count = Number(rle[i]);
-      if (!Number.isFinite(count) || count <= 0) {
-        on ^= 1;
-        continue;
-      }
-      const end = Math.min(total, idx + count);
-      if (on) {
-        for (let p = idx; p < end; p += 1) {
-          const o = p * 4;
-          data[o] = r;
-          data[o + 1] = g;
-          data[o + 2] = b;
-          data[o + 3] = 110;
-        }
-      }
-      idx = end;
-      on ^= 1;
+    for (let p = 0; p < mask.grid.length; p += 1) {
+      if (!mask.grid[p]) continue;
+      const o = p * 4;
+      data[o] = r;
+      data[o + 1] = g;
+      data[o + 2] = b;
+      data[o + 3] = 110;
     }
 
-    ctx.putImageData(img, left, top);
-    state.previews.push({ left, top, width: mw, height: mh });
+    ctx.putImageData(img, mask.left, mask.top);
+    state.previews.push({ left: mask.left, top: mask.top, width: mask.width, height: mask.height });
+    startSync();
+  }
+
+  function drawPolygonPreview(flat, color) {
+    const el = bgCanvas();
+    if (!el || !el.width || !el.height) return;
+
+    const ctx = ensureOverlay(el.width, el.height);
+    if (!ctx || flat.length < 6) return;
+
+    const [r, g, b] = color;
+    ctx.beginPath();
+    for (let i = 0; i + 1 < flat.length; i += 2) {
+      if (i === 0) ctx.moveTo(flat[0], flat[1]);
+      else ctx.lineTo(flat[i], flat[i + 1]);
+    }
+    ctx.closePath();
+    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.43)`;
+    ctx.fill();
+
+    state.previews.push({ left: 0, top: 0, width: el.width, height: el.height });
     startSync();
   }
 
@@ -478,7 +822,11 @@
       </div>
       <div class="body">
         <div class="row muted" id="meta"><span>job —</span><span>frame —</span></div>
-        <div class="row"><select data-k="label" title="Label for new masks"></select></div>
+        <div class="row"><select data-k="label" title="Label for new shapes"></select></div>
+        <div class="row seg">
+          <button data-shape="polygon" class="on" title="Write polygons (recommended)">Polygon</button>
+          <button data-shape="mask" title="Write masks (brush); keeps holes exactly">Mask</button>
+        </div>
         <div class="row seg">
           <button data-mode="point" class="on">Point</button>
           <button data-mode="box">Box</button>
@@ -516,7 +864,8 @@
       meta: card.querySelector('#meta'),
       hint: card.querySelector('#hint'),
       status: card.querySelector('#status'),
-      modeButtons: [...card.querySelectorAll('.seg button')],
+      modeButtons: [...card.querySelectorAll('.seg button[data-mode]')],
+      shapeButtons: [...card.querySelectorAll('.seg button[data-shape]')],
       clear: card.querySelector('button[data-k="clear"]'),
       save: card.querySelector('button[data-k="save"]'),
       reload: card.querySelector('button[data-k="reload"]'),
@@ -529,6 +878,7 @@
     renderMeta();
     renderLabelSelect();
     renderMode();
+    renderShape();
     syncOverlay();
     return state.ui;
   }
@@ -642,6 +992,16 @@
       });
     }
 
+    for (const btn of ui.shapeButtons) {
+      btn.addEventListener('click', () => {
+        if (state.cfg.shape === btn.dataset.shape) return;
+        state.cfg.shape = btn.dataset.shape;
+        saveCfg();
+        renderShape();
+        applyLabelFilter();
+      });
+    }
+
     ui.labelSelect.addEventListener('change', () => {
       state.cfg.labelId = Number(ui.labelSelect.value) || null;
       saveCfg();
@@ -674,6 +1034,13 @@
     const ui = state.ui;
     if (!ui) return;
     for (const btn of ui.modeButtons) btn.classList.toggle('on', btn.dataset.mode === state.cfg.mode);
+  }
+
+  function renderShape() {
+    const ui = state.ui;
+    if (!ui) return;
+    const shape = state.cfg.shape === 'mask' ? 'mask' : 'polygon';
+    for (const btn of ui.shapeButtons) btn.classList.toggle('on', btn.dataset.shape === shape);
   }
 
   function renderLabelSelect() {
@@ -993,6 +1360,7 @@
     await syncJob();
     refreshDot();
     renderMode();
+    renderShape();
 
     document.addEventListener('mousedown', onMouseDown, true);
     document.addEventListener('mousemove', onMouseMove, true);
@@ -1013,6 +1381,8 @@
       if (area !== 'local' || !changes.cfg) return;
       state.cfg = { ...DEFAULTS, ...(changes.cfg.newValue || {}) };
       renderMode();
+      renderShape();
+      applyLabelFilter();
     });
   }
 

@@ -15,8 +15,8 @@ public surfaces:
 | 1 | Read the current frame pixels from `#cvat_canvas_background`. `cvat-data` sizes that canvas from the frame metadata, so it is the source resolution — 1 canvas px = 1 image px. |
 | 2 | Map the click / drag to image coordinates. |
 | 3 | `POST` `{"image": <base64>, "pos_points": ..., "neg_points": ..., "obj_bbox": ...}` to your SAM 3 function (via the service worker, so CORS does not apply). |
-| 4 | `PATCH /api/jobs/<id>/annotations/?action=create` with the returned mask RLE, using the page session cookie + `X-CSRFToken`. |
-| 5 | Preview the mask on an overlay. The annotator shows saved shapes after a reload. |
+| 4 | Convert the mask RLE to the selected shape type, then `PATCH /api/jobs/<id>/annotations/?action=create` using the page session cookie + `X-CSRFToken`. |
+| 5 | Preview the new shape on an overlay. The annotator shows saved shapes after a reload. |
 
 No server-side changes, no admin rights on `cvat.edufun.ai`, no API token.
 
@@ -34,8 +34,12 @@ No server-side changes, no admin rights on `cvat.edufun.ai`, no API token.
 
 - `Alt+S` toggles SAM mode (or the switch in the panel).
 - Drag the panel by its header to move it; the position is remembered.
-- **Point** mode: click an object → one mask. `Shift+click` = negative point.
-- **Box** mode: drag a rectangle → one mask.
+- **Shape: Polygon** (default) writes filled polygons; **Mask** writes CVAT
+  masks (brush). The label list only shows labels CVAT will accept for the
+  selected shape type, so polygon mode lists `polygon`/`any` labels and mask
+  mode lists `mask`/`any`.
+- **Point** mode: click an object → one shape. `Shift+click` = negative point.
+- **Box** mode: drag a rectangle → one shape.
 - Each result is written immediately. **Save** flushes any shapes you edited in
   CVAT itself (same as `Ctrl+S`), **Reload view** then shows everything on the
   same frame (`?frame=N` is preserved).
@@ -45,8 +49,10 @@ No server-side changes, no admin rights on `cvat.edufun.ai`, no API token.
 
 ## Requirements on the CVAT side
 
-- A label of type `mask` or `any` in the task (otherwise the API rejects the
-  shape, and the panel tells you).
+- A label the selected shape type accepts in the task (otherwise the API rejects
+  the shape, and the panel tells you):
+  - polygon mode → label type `polygon` or `any`;
+  - mask mode → label type `mask` or `any`.
 - 2D jobs (images or video). Point clouds are not supported.
 
 ## Requirements on the model side
@@ -99,6 +105,8 @@ icons/           toolbar icons
 
 ## Limitations
 
+- CVAT polygons cannot hold holes, so polygon mode fills interior holes before
+  tracing. Use **Mask** shape if holes matter.
 - Mask previews live on an overlay until the annotator reloads; they are not
   interactive (you cannot edit them before saving).
 - Each click sends a JPEG of the current frame to the model. On a 4K frame with
