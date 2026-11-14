@@ -46,6 +46,7 @@
     gridKey: '',
     raf: 0,
     poll: 0,
+    batch: null,
   };
 
   /* ------------------------------------------------------------------ *
@@ -556,13 +557,12 @@
 
   /* --- end mask -> polygon --- */
 
-  async function applyShapes(shapes, imgW, imgH) {
+  async function applyShapes(shapes, imgW, imgH, frame = currentFrame()) {
     if (!state.jobId) throw new Error('No job detected in the URL.');
     const labelId = effectiveLabelId();
     if (!labelId) throw new Error(state.labelError || 'No label selected.');
 
     const shapeMode = state.cfg.shape === 'mask' ? 'mask' : 'polygon';
-    const frame = currentFrame();
     const created = [];
 
     for (const s of shapes) {
@@ -620,7 +620,7 @@
     state.added += body.shapes.length;
     renderMeta();
 
-    if (state.cfg.autoReload) scheduleReload();
+    if (state.cfg.autoReload && !state.batch) scheduleReload();
   }
 
   function ensureOverlay(w, h) {
@@ -838,6 +838,10 @@
     .row { display: flex; gap: 6px; align-items: center; }
     .muted { color: #97a0b0; font-size: 11px; }
     #meta { justify-content: space-between; }
+    #batchInfo {
+      flex: 1; min-width: 0; text-align: right;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
     select, input[type="text"], input[type="number"], button {
       font: inherit; color: inherit; border-radius: 6px; border: 1px solid #3a4252;
       background: #232833; padding: 5px 7px; outline: none;
@@ -849,6 +853,7 @@
     button { cursor: pointer; white-space: nowrap; }
     button:hover { background: #2c3341; }
     button:disabled { opacity: .45; cursor: default; }
+    button.stop { background: #7f1d1d; border-color: #b91c1c; color: #fff; }
     .seg { display: flex; }
     .seg button { flex: 1; border-radius: 0; }
     .seg button:first-child { border-radius: 6px 0 0 6px; }
@@ -920,6 +925,10 @@
           <button data-k="detect" title="Segment everything matching the prompt">All</button>
         </div>
         <div class="row">
+          <button data-k="batch" title="Run the text prompt on every frame of this job">All frames</button>
+          <span class="muted" id="batchInfo"></span>
+        </div>
+        <div class="row">
           <button data-k="clear">Clear</button>
           <button data-k="save" title="Save CVAT's own unsaved changes (same as Ctrl+S)">Save</button>
           <button data-k="reload" title="Reload the annotator to show saved shapes">Reload view</button>
@@ -957,6 +966,8 @@
       save: card.querySelector('button[data-k="save"]'),
       reload: card.querySelector('button[data-k="reload"]'),
       detect: card.querySelector('button[data-k="detect"]'),
+      batch: card.querySelector('button[data-k="batch"]'),
+      batchInfo: card.querySelector('#batchInfo'),
     };
 
     wirePanel(state.ui);
@@ -1130,6 +1141,25 @@
         await applyShapes(shapes, width, height);
         toast(`${shapes.length} object(s) added.`);
       });
+    });
+
+    ui.batch.addEventListener('click', async () => {
+      if (state.batch) {
+        state.batch.cancel = true;
+        updateBatchButton();
+        setStatus('Stopping after the current frame…');
+        return;
+      }
+      const prompt = ui.prompt.value.trim();
+      if (!prompt) {
+        toast('Type a text prompt first.', true);
+        return;
+      }
+      if (!state.jobId) {
+        toast('No job detected in the URL.', true);
+        return;
+      }
+      await runBusy(() => runBatch(prompt));
     });
   }
 
@@ -1438,6 +1468,189 @@
   function scheduleReload() {
     clearTimeout(reloadTimer);
     reloadTimer = setTimeout(reloadView, 1200);
+  }
+
+  /* ------------------------------------------------------------------ *
+   * Batch mode: run the text prompt on every frame of the job
+   * ------------------------------------------------------------------ */
+
+  function updateBatchButton() {
+    const ui = state.ui;
+    if (!ui) return;
+    const running = !!state.batch;
+    ui.batch.textContent = running ? (state.batch.cancel ? 'Stopping…' : 'Stop') : 'All frames';
+    ui.batch.classList.toggle('stop', running);
+    ui.batch.disabled = running && !!state.batch.cancel;
+    if (running) ui.batch.title = 'Stop after the current frame';
+    else ui.batch.title = 'Run the text prompt on every frame of this job';
+  }
+
+  function setBatchInfo(text) {
+    const ui = state.ui;
+    if (ui) ui.batchInfo.textContent = text || '';
+  }
+
+  async function fetchJobRange() {
+    const res = await fetch(`/api/jobs/${state.jobId}/`, {
+      credentials: 'include',
+      headers: { Accept: 'application/json' },
+    });
+    if (!res.ok) throw new Error(`Cannot read job ${state.jobId} (HTTP ${res.status}).`);
+    const job = await res.json();
+    const start = Number(job.start_frame);
+    const stop = Number(job.stop_frame);
+    if (!Number.isFinite(start) || !Number.isFinite(stop) || stop < start) {
+      throw new Error('Job frame range is not available.');
+    }
+    const count = Number(job.frame_count) || (stop - start + 1);
+    return { start, stop, count };
+  }
+
+  // Small hash of the rendered frame, used to know the canvas has been repainted.
+  function frameThumbprint() {
+    const el = bgCanvas();
+    if (!el || !el.width || !el.height) return null;
+    try {
+      const c = document.createElement('canvas');
+      c.width = 32;
+      c.height = 32;
+      const ctx = c.getContext('2d', { willReadFrequently: true });
+      ctx.drawImage(el, 0, 0, 32, 32);
+      const d = ctx.getImageData(0, 0, 32, 32).data;
+      let a = 0x811c9dc5;
+      let b = 0x1000193;
+      for (let i = 0; i < d.length; i += 4) {
+        const v = (d[i] * 3 + d[i + 1] * 5 + d[i + 2] * 7) & 0xffff;
+        a = Math.imul(a ^ v, 16777619) >>> 0;
+        b = Math.imul(b + v * (i + 1), 2654435761) >>> 0;
+      }
+      return `${a.toString(16)}:${b.toString(16)}`;
+    } catch {
+      return null;
+    }
+  }
+
+  // Resolves true when the player moved to another frame and the new image is drawn.
+  async function waitForFrameChange(prevFrame, prevPrint, maxMs = 20000) {
+    const started = performance.now();
+    let printDeadline = 0;
+    for (;;) {
+      const frame = currentFrame();
+      if (frame !== prevFrame) {
+        const print = frameThumbprint();
+        if (!prevPrint || !print || print !== prevPrint) return true;
+        if (!printDeadline) printDeadline = performance.now() + 2500;
+        if (performance.now() > printDeadline) return true; // identical frames
+      }
+      if (performance.now() - started > maxMs) return frame !== prevFrame;
+      if (state.batch?.cancel && performance.now() - started > 800) return false;
+      await sleep(100);
+    }
+  }
+
+  async function gotoFirstFrame(start) {
+    if (currentFrame() === start) return;
+    const btn = document.querySelector('.cvat-player-first-button');
+    if (!btn) return;
+    const before = currentFrame();
+    const beforePrint = frameThumbprint();
+    btn.click();
+    await waitForFrameChange(before, beforePrint, 15000);
+  }
+
+  async function stepNextFrame(prevFrame) {
+    // Only the regular next button walks every frame in order.
+    const btn = document.querySelector('.cvat-player-next-button');
+    if (!btn) {
+      throw new Error(
+        'Next-frame button not found — right-click it, pick regular navigation, then retry.',
+      );
+    }
+    const beforePrint = frameThumbprint();
+    btn.click();
+    return waitForFrameChange(prevFrame, beforePrint, 20000);
+  }
+
+  async function runBatch(prompt) {
+    const job = await fetchJobRange();
+    const ok = window.confirm(
+      `Run "${prompt}" on ${job.count} frame(s) of job ${state.jobId}?\n\n` +
+        'Shapes are written to every frame and this can take a while.',
+    );
+    if (!ok) return;
+
+    state.batch = { cancel: false, prompt };
+    updateBatchButton();
+    setBatchInfo(`${job.count} frame(s)`);
+    clearPreview();
+    state.added = 0;
+
+    let done = 0;
+    let failed = 0;
+    let hardFails = 0;
+    let fatal = null;
+    let wasCancel = false;
+    const firstErrors = [];
+
+    try {
+      await gotoFirstFrame(job.start);
+
+      for (;;) {
+        if (state.batch.cancel) break;
+        const frame = currentFrame();
+        if (frame > job.stop) break;
+
+        done += 1;
+        setStatus(`Frame ${frame} — segmenting "${prompt}"…`);
+        setBatchInfo(`${done}/${job.count} · frame ${frame} · +${state.added}`);
+
+        try {
+          clearPreview();
+          const { shapes, width, height } = await segment({ prompt });
+          await applyShapes(shapes, width, height, frame);
+          hardFails = 0;
+        } catch (e) {
+          const msg = (e && e.message) || String(e);
+          const soft =
+            /^No object matched/.test(msg) ||
+            msg.includes('too small/thin') ||
+            msg.includes('no usable mask');
+          if (soft) {
+            hardFails = 0; // legitimate empty / unusable frame
+          } else {
+            failed += 1;
+            hardFails += 1;
+            if (firstErrors.length < 5) firstErrors.push(`frame ${frame}: ${msg}`);
+            if (hardFails >= 3) {
+              throw new Error(`Batch stopped: 3 frames in a row failed. ${firstErrors[0]}`);
+            }
+          }
+        }
+
+        if (state.batch.cancel) break;
+        if (frame >= job.stop) break;
+
+        const moved = await stepNextFrame(frame);
+        if (!moved) break;
+      }
+    } catch (e) {
+      fatal = e;
+    } finally {
+      wasCancel = !!state.batch?.cancel;
+      state.batch = null;
+      updateBatchButton();
+    }
+
+    if (fatal) throw fatal;
+
+    const parts = [`${done} frame(s)`, `+${state.added} shape(s)`];
+    if (failed) parts.push(`${failed} failed`);
+    toast(
+      `Batch ${wasCancel ? 'stopped' : 'finished'}: ${parts.join(' · ')}.` +
+        (failed ? ` ${firstErrors[0]}` : ' Press Reload view to see the shapes.'),
+      failed > 0,
+    );
+    setBatchInfo(`${wasCancel ? 'stopped' : 'done'} · ${done}/${job.count} · +${state.added}`);
   }
 
   async function syncJob() {

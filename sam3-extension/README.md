@@ -51,6 +51,15 @@ No server-side changes, no admin rights on `cvat.edufun.ai`, no API token.
   needs the text-prompt branch that `../sam3/main.py` now has. On CPU the first
   call for a frame takes ~25 s (image embedding); later prompts on the same
   frame reuse that embedding and finish in seconds.
+- **All frames** runs that same prompt over the whole job: it jumps to the first
+  frame, segments, writes the shapes, then clicks CVAT's own *next frame*
+  button (so deleted / step / included frames behave exactly like manual work)
+  and repeats until the last frame. A confirmation shows the frame count first
+  — on CPU budget ~25 s for the first frame and a few seconds for the rest.
+  The button turns into **Stop**; it stops after the current frame (already
+  written shapes stay). Progress is shown next to the button. If the *next*
+  button was switched to filtered/empty/chapter navigation (right-click menu),
+  switch it back to regular frames. Requires a text prompt.
 
 ## Requirements on the CVAT side
 
@@ -97,3 +106,6 @@ icons/           toolbar icons
 - Each click sends a JPEG of the current frame to the model. On a 4K frame with
   CPU inference this is slow — expect 10–60 s per object depending on hardware.
 - `action=create` appends; it never edits or deletes existing shapes.
+- **All frames** keeps going on empty frames but aborts after three hard errors
+  in a row (model down, timeout, rejected write). Frames processed before a
+  stop are already saved on the server.
