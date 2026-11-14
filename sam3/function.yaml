@@ -57,6 +57,10 @@ spec:
         # fc1+GELU path instead.
         - kind: RUN
           value: sed -i 's|x = addmm_act(type(self.act), self.fc1, x)|x = self.act(self.fc1(x))|' /usr/local/lib/python3.10/site-packages/sam3/model/vitdet.py
+        # pin_memory() needs a CUDA host; text/geometric prompt encoding calls
+        # it unconditionally and fails on CPU-only hosts.
+        - kind: RUN
+          value: sed -i 's|scale = scale.pin_memory().to(device=boxes_xyxy.device, non_blocking=True)|scale = scale.to(device=boxes_xyxy.device)|' /usr/local/lib/python3.10/site-packages/sam3/model/geometry_encoders.py
 
   triggers:
     myHttpTrigger:

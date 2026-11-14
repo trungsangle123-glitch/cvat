@@ -26,6 +26,8 @@
     shape: 'polygon',
     labelId: null,
     autoReload: false,
+    grid: false,
+    gridSize: 32,
   };
 
   const state = {
@@ -41,6 +43,7 @@
     ui: null,
     drag: null,
     previews: [],
+    gridKey: '',
     raf: 0,
     poll: 0,
   };
@@ -168,9 +171,7 @@
     const shapes = extractShapes(data);
     if (!shapes.length) {
       if (prompt) {
-        throw new Error(
-          'Model returned no shapes. Text prompts need a SAM 3 "concept" handler in the Nuclio function.',
-        );
+        throw new Error(`No object matched "${prompt}" in this frame.`);
       }
       throw new Error('Model returned no shapes for that prompt.');
     }
@@ -685,14 +686,72 @@
    * Overlay positioning
    * ------------------------------------------------------------------ */
 
-  function syncOverlay() {
-    const ov = state.ui?.overlay;
-    const el = bgCanvas();
-    if (!ov || !el) return;
-    const r = el.getBoundingClientRect();
-    if (!r.width || !r.height) return;
+  function clampGridSize(value) {
+    const n = Math.round(Number(value));
+    if (!Number.isFinite(n)) return DEFAULTS.gridSize;
+    return Math.max(4, Math.min(1024, n));
+  }
 
-    const style = ov.style;
+  // Grid is drawn in image pixels and CSS-scaled with the background canvas,
+  // so its cells line up with the brush regardless of zoom.
+  function drawGrid() {
+    const ui = state.ui;
+    const el = bgCanvas();
+    if (!ui || !el || !el.width || !el.height) return;
+
+    const g = ui.gridCanvas;
+    if (!state.cfg.grid) {
+      g.style.display = 'none';
+      state.gridKey = '';
+      return;
+    }
+    g.style.display = '';
+
+    const size = clampGridSize(state.cfg.gridSize);
+    const key = `${el.width}x${el.height}@${size}`;
+    if (state.gridKey === key) return;
+
+    if (g.width !== el.width || g.height !== el.height) {
+      g.width = el.width;
+      g.height = el.height;
+    }
+    const ctx = g.getContext('2d');
+    ctx.clearRect(0, 0, g.width, g.height);
+
+    const lines = [];
+    for (let x = size, i = 1; x < g.width; x += size, i += 1) lines.push([x, 0, x, g.height, i % 5 === 0]);
+    for (let y = size, i = 1; y < g.height; y += size, i += 1) lines.push([0, y, g.width, y, i % 5 === 0]);
+
+    const stroke = (offset, width, colorFor) => {
+      ctx.lineWidth = width;
+      for (const [x1, y1, x2, y2, major] of lines) {
+        ctx.strokeStyle = colorFor(major);
+        ctx.beginPath();
+        ctx.moveTo(x1 + offset, y1 + offset);
+        ctx.lineTo(x2 + offset, y2 + offset);
+        ctx.stroke();
+      }
+    };
+
+    // Dark halo first so the cyan stays visible on bright frames.
+    stroke(0, 3, () => 'rgba(0, 0, 0, 0.45)');
+    stroke(0.5, 1, (major) => (major ? 'rgba(34, 211, 238, 0.95)' : 'rgba(34, 211, 238, 0.5)'));
+
+    state.gridKey = key;
+  }
+
+  function applyGrid() {
+    const ui = state.ui;
+    if (!ui) return;
+    ui.gridToggle.checked = !!state.cfg.grid;
+    ui.gridSize.value = String(clampGridSize(state.cfg.gridSize));
+    if (state.cfg.grid) startSync();
+    else if (!state.enabled && !state.previews.length) stopSync();
+    drawGrid();
+  }
+
+  function positionCanvas(canvas, r) {
+    const style = canvas.style;
     const left = `${r.left}px`;
     const top = `${r.top}px`;
     const width = `${r.width}px`;
@@ -701,6 +760,18 @@
     if (style.top !== top) style.top = top;
     if (style.width !== width) style.width = width;
     if (style.height !== height) style.height = height;
+  }
+
+  function syncOverlay() {
+    const ui = state.ui;
+    const el = bgCanvas();
+    if (!ui || !el) return;
+    const r = el.getBoundingClientRect();
+    if (!r.width || !r.height) return;
+
+    positionCanvas(ui.overlay, r);
+    positionCanvas(ui.gridCanvas, r);
+    drawGrid();
   }
 
   function startSync() {
@@ -722,7 +793,7 @@
     const ov = state.ui?.overlay;
     if (ov) ov.getContext('2d').clearRect(0, 0, ov.width, ov.height);
     state.previews = [];
-    if (!state.enabled) stopSync();
+    if (!state.enabled && !state.cfg.grid) stopSync();
   }
 
   /* ------------------------------------------------------------------ *
@@ -767,12 +838,14 @@
     .row { display: flex; gap: 6px; align-items: center; }
     .muted { color: #97a0b0; font-size: 11px; }
     #meta { justify-content: space-between; }
-    select, input[type="text"], button {
+    select, input[type="text"], input[type="number"], button {
       font: inherit; color: inherit; border-radius: 6px; border: 1px solid #3a4252;
       background: #232833; padding: 5px 7px; outline: none;
     }
     select { flex: 1; min-width: 0; }
     input[type="text"] { flex: 1; min-width: 0; }
+    input[type="number"] { width: 58px; text-align: right; }
+    input[type="number"]::-webkit-inner-spin-button { opacity: .45; }
     button { cursor: pointer; white-space: nowrap; }
     button:hover { background: #2c3341; }
     button:disabled { opacity: .45; cursor: default; }
@@ -809,6 +882,10 @@
     const ov = document.createElement('canvas');
     ov.className = 'ov';
 
+    const gridCanvas = document.createElement('canvas');
+    gridCanvas.className = 'ov';
+    gridCanvas.style.display = 'none';
+
     const drag = document.createElement('div');
     drag.className = 'drag';
 
@@ -832,6 +909,13 @@
           <button data-mode="box">Box</button>
         </div>
         <div class="row">
+          <label class="sw" title="Show a grid over the image">
+            <input type="checkbox" data-k="grid"><span>Grid</span>
+          </label>
+          <input type="number" data-k="gridSize" min="4" max="1024" step="1" title="Grid cell size in image pixels">
+          <span class="muted">px</span>
+        </div>
+        <div class="row">
           <input type="text" data-k="prompt" placeholder="text prompt (concept)">
           <button data-k="detect" title="Segment everything matching the prompt">All</button>
         </div>
@@ -847,13 +931,14 @@
     const toast = document.createElement('div');
     toast.className = 'toast';
 
-    root.append(style, ov, drag, card, toast);
+    root.append(style, gridCanvas, ov, drag, card, toast);
     document.body.appendChild(host);
 
     state.ui = {
       host,
       root,
       overlay: ov,
+      gridCanvas,
       drag,
       card,
       toast,
@@ -866,6 +951,8 @@
       status: card.querySelector('#status'),
       modeButtons: [...card.querySelectorAll('.seg button[data-mode]')],
       shapeButtons: [...card.querySelectorAll('.seg button[data-shape]')],
+      gridToggle: card.querySelector('input[data-k="grid"]'),
+      gridSize: card.querySelector('input[data-k="gridSize"]'),
       clear: card.querySelector('button[data-k="clear"]'),
       save: card.querySelector('button[data-k="save"]'),
       reload: card.querySelector('button[data-k="reload"]'),
@@ -879,6 +966,7 @@
     renderLabelSelect();
     renderMode();
     renderShape();
+    applyGrid();
     syncOverlay();
     return state.ui;
   }
@@ -1002,6 +1090,21 @@
       });
     }
 
+    ui.gridToggle.addEventListener('change', () => {
+      state.cfg.grid = ui.gridToggle.checked;
+      saveCfg();
+      applyGrid();
+    });
+
+    ui.gridSize.addEventListener('change', () => {
+      const size = clampGridSize(ui.gridSize.value);
+      ui.gridSize.value = String(size);
+      state.cfg.gridSize = size;
+      saveCfg();
+      state.gridKey = '';
+      drawGrid();
+    });
+
     ui.labelSelect.addEventListener('change', () => {
       state.cfg.labelId = Number(ui.labelSelect.value) || null;
       saveCfg();
@@ -1114,7 +1217,7 @@
       setStatus('Click the image to segment.');
     } else {
       cancelDrag();
-      if (!state.previews.length) stopSync();
+      if (!state.previews.length && !state.cfg.grid) stopSync();
       setStatus('');
     }
   }
@@ -1383,6 +1486,7 @@
       renderMode();
       renderShape();
       applyLabelFilter();
+      applyGrid();
     });
   }
 

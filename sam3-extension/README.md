@@ -38,14 +38,19 @@ No server-side changes, no admin rights on `cvat.edufun.ai`, no API token.
   masks (brush). The label list only shows labels CVAT will accept for the
   selected shape type, so polygon mode lists `polygon`/`any` labels and mask
   mode lists `mask`/`any`.
+- **Grid** draws a non-interactive grid over the image (edge length in image
+  pixels, default 32) to help painting with CVAT's brush. It sits on a separate
+  overlay, so it never blocks clicks or brush strokes.
 - **Point** mode: click an object → one shape. `Shift+click` = negative point.
 - **Box** mode: drag a rectangle → one shape.
 - Each result is written immediately. **Save** flushes any shapes you edited in
   CVAT itself (same as `Ctrl+S`), **Reload view** then shows everything on the
   same frame (`?frame=N` is preserved).
-- **All** + a text prompt calls the model once for the whole frame. This needs a
-  SAM 3 *concept* handler on the server (see below) — the current interactor
-  returns nothing for text-only requests.
+- **All** + a text prompt asks the model for every object matching the concept
+  in the current frame and adds them all at once (best score first). The server
+  needs the text-prompt branch that `../sam3/main.py` now has. On CPU the first
+  call for a frame takes ~25 s (image embedding); later prompts on the same
+  frame reuse that embedding and finish in seconds.
 
 ## Requirements on the CVAT side
 
@@ -63,35 +68,15 @@ The function must speak the CVAT interactor contract, which
 ```json
 // request
 {"image": "<base64 jpeg>", "pos_points": [[x, y]], "neg_points": [], "obj_bbox": null}
+// text prompt request
+{"image": "<base64 jpeg>", "prompt": "car", "confidence": 0.5}
 // response
 {"shapes": [{"type": "mask", "points": [<rle...>, 0, 0, w-1, h-1]}]}
 ```
 
 Note `obj_bbox` accepts either `[x1, y1, x2, y2]` or `[[x1, y1], [x2, y2]]`.
-
-### Optional: real "automatic" segmentation
-
-`sam3/main.py` is registered as `type: interactor` and its handler ignores
-`prompt`. To make the **All** button work, add a concept branch next to the
-existing one:
-
-```python
-from sam3.model.sam3_image_processor import Sam3Processor
-
-# in ModelHandler.__init__
-self.processor = Sam3Processor(self.model)
-
-# in handler(), before the point/box path
-prompt = data.get("prompt")
-if prompt:
-    state = self.processor.set_image(image)
-    state = self.processor.set_text_prompt(state=state, prompt=prompt)
-    masks = state["masks"]  # list of HxW boolean tensors
-    return [mask_to_rle(m.astype("uint8")) for m in masks]
-```
-
-then return them as `shapes` in the same response envelope. That turns the
-extension into text-prompted auto-annotation ("person, helmet, forklift").
+When `prompt` is set, the handler runs SAM 3's concept grounding and returns one
+mask per match; `confidence` is optional (default 0.5).
 
 ## Files
 

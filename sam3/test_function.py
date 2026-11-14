@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Send a test interactor request to a deployed SAM 3 Nuclio function.
+"""Send a test request to a deployed SAM 3 Nuclio function.
 
 Usage:
     python3 test_function.py <node-port> <image> [x y]
+    python3 test_function.py <node-port> <image> --prompt <text>
 
 The point prompt defaults to the center of the image.
 """
@@ -28,14 +29,21 @@ def main():
     except ImportError:
         width = height = 512
 
-    if len(sys.argv) >= 5:
-        x, y = float(sys.argv[3]), float(sys.argv[4])
+    if len(sys.argv) >= 5 and sys.argv[3] == "--prompt":
+        payload_data = {"image": image_b64, "prompt": " ".join(sys.argv[4:])}
     else:
-        x, y = width / 2, height / 2
+        if len(sys.argv) >= 5:
+            x, y = float(sys.argv[3]), float(sys.argv[4])
+        else:
+            x, y = width / 2, height / 2
+        payload_data = {
+            "image": image_b64,
+            "pos_points": [[x, y]],
+            "neg_points": [],
+            "obj_bbox": None,
+        }
 
-    payload = json.dumps(
-        {"image": image_b64, "pos_points": [[x, y]], "neg_points": [], "obj_bbox": None}
-    ).encode()
+    payload = json.dumps(payload_data).encode()
 
     request = urllib.request.Request(
         f"http://127.0.0.1:{port}",
@@ -51,9 +59,13 @@ def main():
 
     shapes = result.get("shapes", [])
     print(f"elapsed_sec={elapsed:.1f} shapes={len(shapes)}")
-    if shapes:
-        points = shapes[0]["points"]
-        print(f"type={shapes[0]['type']} points={len(points)} bbox={points[-4:]}")
+    for i, shape in enumerate(shapes):
+        points = shape["points"]
+        left, top, right, bottom = points[-4:]
+        print(
+            f"  [{i}] type={shape['type']} runs={len(points) - 4} "
+            f"bbox=({left}, {top}, {right}, {bottom})"
+        )
 
 
 if __name__ == "__main__":

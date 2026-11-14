@@ -4,8 +4,10 @@ Runs [Segment Anything Model 3](https://github.com/facebookresearch/sam3) as a
 CVAT serverless (Nuclio) interactor.
 
 - Function name in CVAT: **Segment Anything 3**
-- Prompt types: positive points, negative points, bounding box
-- Output: one mask shape (CVAT compressed RLE)
+- Prompt types: positive points, negative points, bounding box, or a text
+  prompt (concept)
+- Output: one mask shape per prompt (CVAT compressed RLE); a text prompt can
+  return several masks, best score first
 - Default device: CPU (change `DEVICE` in `function.yaml` to `cuda:0` for GPU)
 - Checkpoint: `sam3.pt` downloaded at image build time
 
@@ -44,7 +46,8 @@ Once ready, open a job in CVAT and select **Segment Anything 3** in
   memory limit from `%USERPROFILE%\.wslconfig` (`[wsl2] memory=12GB`).
 - SAM 3 precomputes position-encoding caches on `cuda` unconditionally; the
   build patches that in `position_encoding.py` and `decoder.py` so the model
-  can be constructed on CPU-only hosts.
+  can be constructed on CPU-only hosts. It also drops a `pin_memory()` call in
+  `geometry_encoders.py`, which crashes text/box prompt encoding without CUDA.
 - The image is built from the ungated `1038lab/sam3` mirror of the official
   `facebook/sam3` checkpoint. To use the official gated repository, edit the
   checkpoint download step in `function.yaml` and pass a Hugging Face token.

@@ -10,10 +10,15 @@ import os
 
 import numpy as np
 from PIL import Image
+from sam3.model.sam3_image_processor import Sam3Processor
 from sam3.model_builder import build_sam3_image_model
 
 CHECKPOINT_PATH = os.environ.get("CHECKPOINT_PATH", "/opt/nuclio/sam3/sam3.pt")
 DEVICE = os.environ.get("DEVICE", "cpu")
+
+# Text (concept) prompts can match many objects; keep responses reasonable.
+MAX_CONCEPT_SHAPES = 64
+MIN_CONCEPT_AREA = 4
 
 
 def mask_to_rle(mask):
@@ -49,6 +54,12 @@ class ModelHandler:
         self.model = self.model.float()
         self.predictor = self.model.inst_interactive_predictor
         self.latest_image_hash = None
+
+        # Concept/text-prompt path (Sam3Processor). It keeps its own cached
+        # image embeddings, separate from the interactive predictor's cache.
+        self.processor = Sam3Processor(self.model, device=DEVICE)
+        self.text_state = None
+        self.text_state_hash = None
 
     def set_image(self, image):
         image_hash = hashlib.sha1(image.tobytes()).digest()
@@ -86,6 +97,44 @@ class ModelHandler:
         best_mask = masks[int(np.argmax(ious))]
         return mask_to_rle(best_mask.astype(np.uint8))
 
+    def _text_state_for(self, image, image_hash):
+        """Return a prompt-free state whose image embeddings are cached."""
+        if self.text_state is None or image_hash != self.text_state_hash:
+            self.text_state = self.processor.set_image(image)
+            self.text_state_hash = image_hash
+
+        # Shallow-copy the state and the backbone dict: set_text_prompt writes
+        # the language features into backbone_out and the masks into the state,
+        # and those must not leak into the cache.
+        state = dict(self.text_state)
+        state["backbone_out"] = dict(self.text_state["backbone_out"])
+        for key in ("geometric_prompt", "masks", "masks_logits", "boxes", "scores"):
+            state.pop(key, None)
+        return state
+
+    def handle_text(self, image, prompt, confidence=None):
+        """Segment every object matching a text concept, best score first."""
+        if confidence is None:
+            confidence = 0.5
+        self.processor.set_confidence_threshold(min(1.0, max(0.01, float(confidence))))
+
+        image_hash = hashlib.sha1(image.tobytes()).digest()
+        state = self._text_state_for(image, image_hash)
+        state = self.processor.set_text_prompt(prompt, state=state)
+
+        masks = state["masks"].detach().cpu().numpy()
+        scores = state["scores"].detach().cpu().numpy()
+
+        results = []
+        for index in np.argsort(-scores):
+            mask = np.asarray(masks[index]).squeeze()
+            if mask.ndim != 2 or int(mask.sum()) < MIN_CONCEPT_AREA:
+                continue
+            results.append(mask_to_rle(mask.astype(np.uint8)))
+            if len(results) >= MAX_CONCEPT_SHAPES:
+                break
+        return results
+
 
 def init_context(context):
     context.logger.info(f"Loading SAM 3 from {CHECKPOINT_PATH} (device={DEVICE})")
@@ -96,19 +145,15 @@ def init_context(context):
 def handler(context, event):
     data = event.body
     image = Image.open(io.BytesIO(base64.b64decode(data["image"]))).convert("RGB")
-
-    points = context.user_data.model.handle(
-        image,
-        data.get("pos_points") or [],
-        data.get("neg_points") or [],
-        data.get("obj_bbox"),
-    )
+    model = context.user_data.model
 
     shapes = []
-    if points:
-        shapes.append(
+    prompt = str(data.get("prompt") or "").strip()
+    if prompt:
+        rles = model.handle_text(image, prompt, data.get("confidence"))
+        shapes = [
             {
-                "points": points,
+                "points": rle,
                 "group": 0,
                 "source": "semi-auto",
                 "attributes": [],
@@ -116,7 +161,27 @@ def handler(context, event):
                 "rotation": 0,
                 "type": "mask",
             }
+            for rle in rles
+        ]
+    else:
+        points = model.handle(
+            image,
+            data.get("pos_points") or [],
+            data.get("neg_points") or [],
+            data.get("obj_bbox"),
         )
+        if points:
+            shapes.append(
+                {
+                    "points": points,
+                    "group": 0,
+                    "source": "semi-auto",
+                    "attributes": [],
+                    "occluded": False,
+                    "rotation": 0,
+                    "type": "mask",
+                }
+            )
 
     return context.Response(
         body=json.dumps({"shapes": shapes}),
