@@ -1490,20 +1490,38 @@
     if (ui) ui.batchInfo.textContent = text || '';
   }
 
+  function rangeFromPlayer() {
+    // The frame selector is rendered with min={startFrame} max={stopFrame}.
+    const input = document.querySelector('.cvat-player-frame-selector input');
+    const minAttr = input?.getAttribute('min');
+    const maxAttr = input?.getAttribute('max');
+    const start = minAttr ? Number(minAttr) : NaN;
+    const stop = maxAttr ? Number(maxAttr) : NaN;
+    if (!Number.isFinite(start) || !Number.isFinite(stop) || stop < start) return null;
+    return { start, stop };
+  }
+
   async function fetchJobRange() {
-    const res = await fetch(`/api/jobs/${state.jobId}/`, {
-      credentials: 'include',
-      headers: { Accept: 'application/json' },
-    });
-    if (!res.ok) throw new Error(`Cannot read job ${state.jobId} (HTTP ${res.status}).`);
-    const job = await res.json();
-    const start = Number(job.start_frame);
-    const stop = Number(job.stop_frame);
-    if (!Number.isFinite(start) || !Number.isFinite(stop) || stop < start) {
-      throw new Error('Job frame range is not available.');
+    // DRF router uses trailing_slash=False in this CVAT version.
+    try {
+      const res = await fetch(`/api/jobs/${state.jobId}`, {
+        credentials: 'include',
+        headers: { Accept: 'application/json' },
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const job = await res.json();
+      const start = Number(job.start_frame);
+      const stop = Number(job.stop_frame);
+      if (!Number.isFinite(start) || !Number.isFinite(stop) || stop < start) {
+        throw new Error('job has no frame range');
+      }
+      return { start, stop, count: Number(job.frame_count) || (stop - start + 1) };
+    } catch (e) {
+      // Fall back to the player's own min/max when the API call is unavailable.
+      const range = rangeFromPlayer();
+      if (range) return { ...range, count: range.stop - range.start + 1 };
+      throw new Error(`Cannot read job ${state.jobId}: ${(e && e.message) || e}`);
     }
-    const count = Number(job.frame_count) || (stop - start + 1);
-    return { start, stop, count };
   }
 
   // Small hash of the rendered frame, used to know the canvas has been repainted.
