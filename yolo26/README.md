@@ -4,8 +4,11 @@ Runs [Ultralytics YOLO26](https://docs.ultralytics.com/models/yolo26) as a CVAT
 serverless (Nuclio) detector.
 
 - Default model: `yolo26n-objv1-150.pt` (Objects365, includes `car`, `truck`,
-  `bus`, `van`), downloaded at image build time.
-- Output labels: only `car`, `truck`, `bus`, `van`.
+  `bus`, `van`, `motorcycle`, `bicycle`, `person`, `tricycle`), downloaded at
+  image build time.
+- Output labels: `car`, `truck`, `van`, `bus`, `motorcycle`, `tuk_tuk`,
+  `bicycle`, `cyclo`, `person`, `ignore_region` (see `function.yaml`).
+  `tuk_tuk` / `ignore_region` are never produced by the default checkpoint.
 - Default device: CPU.
 - Input: CVAT auto-annotation request (`image` as base64 + `threshold`).
 - Output: rectangle shapes with `label`, `points`, `confidence`, `type`.
@@ -47,9 +50,11 @@ Once ready, the model appears in CVAT as **YOLO26** in
 
 `TARGET_LABELS` in `function.yaml` controls which labels are returned. With the
 default Objects365 checkpoint, `suv`/`sports car`/`race car`/`taxi`/`pickup truck`
-are folded into `car`, `minibus` into `bus`, `minivan` into `van`, and
-`tractor`/`tractor trailer`/`fire truck`/`heavy truck` into `truck`; all other
-classes are discarded.
+are folded into `car`, `minibus` into `bus`, `minivan` into `van`,
+`tricycle` into `cyclo`, and `tractor`/`tractor trailer`/`fire truck`/`heavy
+truck` into `truck`; all other classes are discarded. Shapes are returned with
+the default attributes `occluded_level=0`, `truncated=no`, `can_review=false`
+(CVAT keeps them only if the task label defines the same attributes).
 
 ## GPU
 

@@ -2,7 +2,9 @@
 
 This guide configures and deploys the YOLO26 serverless detector for CVAT.
 
-- Labels: `car`, `truck`, `bus`, `van`
+- Labels: `car`, `truck`, `van`, `bus`, `motorcycle`, `tuk_tuk`, `bicycle`,
+  `cyclo`, `person`, `ignore_region` (each with `occluded_level`, `truncated`,
+  `can_review` attributes, except `ignore_region`)
 - Model: `yolo26n-objv1-150.pt` (Ultralytics YOLO26, Objects365-pretrained)
 - Device: CPU
 - Function name in CVAT: **YOLO26**
@@ -40,11 +42,11 @@ Key config already set:
 spec:
   env:
     - name: MODEL_PATH
-      value: /opt/nuclio/yolo26n-objv1-150.pt   # Objects365 model: car/truck/bus/van
+      value: /opt/nuclio/yolo26n-objv1-150.pt   # Objects365 model
     - name: DEVICE
       value: cpu
     - name: TARGET_LABELS
-      value: car,truck,bus,van
+      value: car,truck,bus,van,motorcycle,bicycle,person,cyclo,tuk_tuk
 
 metadata:
   annotations:
@@ -52,10 +54,16 @@ metadata:
     type: detector
     spec: |
       [
-        { "id": 0, "name": "car", "type": "rectangle" },
-        { "id": 1, "name": "truck", "type": "rectangle" },
-        { "id": 2, "name": "bus", "type": "rectangle" },
-        { "id": 3, "name": "van", "type": "rectangle" }
+        { "name": "car", "type": "rectangle", "attributes": [...] },
+        { "name": "truck", "type": "rectangle", "attributes": [...] },
+        { "name": "van", "type": "rectangle", "attributes": [...] },
+        { "name": "bus", "type": "rectangle", "attributes": [...] },
+        { "name": "motorcycle", "type": "rectangle", "attributes": [...] },
+        { "name": "tuk_tuk", "type": "rectangle", "attributes": [...] },
+        { "name": "bicycle", "type": "rectangle", "attributes": [...] },
+        { "name": "cyclo", "type": "rectangle", "attributes": [...] },
+        { "name": "person", "type": "rectangle", "attributes": [...] },
+        { "name": "ignore_region", "type": "rectangle", "attributes": [] }
       ]
 ```
 
@@ -105,7 +113,9 @@ ultralytics-yolo26   cvat      ready   1/1        53158
 5. Set **Threshold**:
    - `0.25` → more detections, best if you will review
    - `0.50` → cleaner, fewer false positives
-6. Map the 4 labels: `car`, `truck`, `bus`, `van`.
+6. Map the labels: `car`, `truck`, `van`, `bus`, `motorcycle`, `tuk_tuk`,
+   `bicycle`, `cyclo`, `person`, `ignore_region` (`tuk_tuk` and
+   `ignore_region` are never auto-detected by the default checkpoint).
 7. Run it.
 
 Threshold is a **run setting in CVAT**, not a per-image count setting. It does not change based on 50 vs 500 images.

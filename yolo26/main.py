@@ -21,12 +21,23 @@ MERGE_IOU = float(os.environ.get("MERGE_IOU", "0.5"))    # NMS sau khi gộp l�
 CROSS_CLASS_IOU = float(os.environ.get("CROSS_CLASS_IOU", "0.8"))  # car vs van trên cùng 1 xe
 TARGET_LABELS = {
     label.strip().lower()
-    for label in os.environ.get("TARGET_LABELS", "car,truck,bus,van").split(",")
+    for label in os.environ.get(
+        "TARGET_LABELS",
+        "car,truck,bus,van,motorcycle,bicycle,person,cyclo,tuk_tuk",
+    ).split(",")
     if label.strip()
 }
 
-# Objects365 has several vehicle subclasses. Map them into the four labels
-# exposed by this CVAT function so they are not silently dropped.
+# Default attribute values attached to every auto-annotated shape. CVAT drops
+# attributes the task label does not define, so this is safe for any label set.
+DEFAULT_ATTRIBUTES = {
+    "occluded_level": "0",
+    "truncated": "no",
+    "can_review": "false",
+}
+
+# Objects365 has several vehicle subclasses. Map them into the labels exposed
+# by this CVAT function so they are not silently dropped.
 LABEL_ALIASES = {
     "suv": "car",
     "sports car": "car",
@@ -39,13 +50,30 @@ LABEL_ALIASES = {
     "tractor trailer": "truck",
     "fire truck": "truck",
     "heavy truck": "truck",
+    "tricycle": "cyclo",
 }
+
+# Labels that describe the same physical object when misclassified as each
+# other. Boxes from different groups are never suppressed by each other, so a
+# rider (person) on a bicycle keeps both boxes.
+MERGE_GROUPS = (
+    frozenset({"car", "truck", "bus", "van"}),
+    frozenset({"motorcycle", "bicycle", "cyclo", "tuk_tuk"}),
+)
 
 
 def _to_target_label(name):
     label = name.strip().lower()
     label = LABEL_ALIASES.get(label, label)
     return label if label in TARGET_LABELS else None
+
+
+def _merge_group(label, label_names):
+    for index, group in enumerate(MERGE_GROUPS):
+        if label in group:
+            return index
+    # Every other label sits in its own group: no cross-label suppression.
+    return len(MERGE_GROUPS) + label_names.index(label)
 
 
 def _dedupe(boxes, scores, labels):
@@ -62,9 +90,13 @@ def _dedupe(boxes, scores, labels):
     keep = batched_nms(b, s, ids, MERGE_IOU)
     b, s, ids = b[keep], s[keep], ids[keep]
 
-    # 2) cùng một xe nhưng bị đoán 2 nhãn khác nhau (car vs van):
-    #    chỉ giữ nhãn có confidence cao hơn, ngưỡng cao để không xoá xe đỗ sát nhau
-    keep = batched_nms(b, s, torch.zeros_like(ids), CROSS_CLASS_IOU)
+    # 2) cùng một xe nhưng bị đoán 2 nhãn khác nhau (car vs van,
+    #    motorcycle vs bicycle): chỉ giữ nhãn có confidence cao hơn,
+    #    ngưỡng cao để không xoá xe đỗ sát nhau
+    groups = torch.tensor(
+        [_merge_group(label_names[int(i)], label_names) for i in ids]
+    )
+    keep = batched_nms(b, s, groups, CROSS_CLASS_IOU)
     b, s, ids = b[keep], s[keep], ids[keep]
 
     return [
@@ -116,6 +148,10 @@ def handler(context, event):
             "label": label,
             "points": box,
             "type": "rectangle",
+            "attributes": [
+                {"name": name, "value": value}
+                for name, value in DEFAULT_ATTRIBUTES.items()
+            ],
         }
         for box, score, label in _dedupe(boxes, scores, labels)
     ]

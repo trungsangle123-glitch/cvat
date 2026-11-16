@@ -8,14 +8,86 @@ metadata:
     framework: pytorch
     spec: |
       [
-        { "id": 0, "name": "car", "type": "rectangle" },
-        { "id": 1, "name": "truck", "type": "rectangle" },
-        { "id": 2, "name": "bus", "type": "rectangle" },
-        { "id": 3, "name": "van", "type": "rectangle" }
+        {
+          "name": "car", "id": 27, "color": "#e6194b", "type": "rectangle",
+          "attributes": [
+            { "id": 1, "name": "occluded_level", "input_type": "select", "mutable": false, "values": ["0", "1", "2", "3"], "default_value": "0" },
+            { "id": 2, "name": "truncated", "input_type": "select", "mutable": false, "values": ["no", "yes"], "default_value": "no" },
+            { "id": 3, "name": "can_review", "input_type": "checkbox", "mutable": false, "values": ["false"], "default_value": "false" }
+          ]
+        },
+        {
+          "name": "truck", "id": 28, "color": "#3cb44b", "type": "rectangle",
+          "attributes": [
+            { "id": 4, "name": "occluded_level", "input_type": "select", "mutable": false, "values": ["0", "1", "2", "3"], "default_value": "0" },
+            { "id": 5, "name": "truncated", "input_type": "select", "mutable": false, "values": ["no", "yes"], "default_value": "no" },
+            { "id": 6, "name": "can_review", "input_type": "checkbox", "mutable": false, "values": ["false"], "default_value": "false" }
+          ]
+        },
+        {
+          "name": "van", "id": 29, "color": "#4363d8", "type": "rectangle",
+          "attributes": [
+            { "id": 7, "name": "occluded_level", "input_type": "select", "mutable": false, "values": ["0", "1", "2", "3"], "default_value": "0" },
+            { "id": 8, "name": "truncated", "input_type": "select", "mutable": false, "values": ["no", "yes"], "default_value": "no" },
+            { "id": 9, "name": "can_review", "input_type": "checkbox", "mutable": false, "values": ["false"], "default_value": "false" }
+          ]
+        },
+        {
+          "name": "bus", "id": 30, "color": "#f58231", "type": "rectangle",
+          "attributes": [
+            { "id": 10, "name": "occluded_level", "input_type": "select", "mutable": false, "values": ["0", "1", "2", "3"], "default_value": "0" },
+            { "id": 11, "name": "truncated", "input_type": "select", "mutable": false, "values": ["no", "yes"], "default_value": "no" },
+            { "id": 12, "name": "can_review", "input_type": "checkbox", "mutable": false, "values": ["false"], "default_value": "false" }
+          ]
+        },
+        {
+          "name": "motorcycle", "id": 31, "color": "#911eb4", "type": "rectangle",
+          "attributes": [
+            { "id": 13, "name": "occluded_level", "input_type": "select", "mutable": false, "values": ["0", "1", "2", "3"], "default_value": "0" },
+            { "id": 14, "name": "truncated", "input_type": "select", "mutable": false, "values": ["no", "yes"], "default_value": "no" },
+            { "id": 15, "name": "can_review", "input_type": "checkbox", "mutable": false, "values": ["false"], "default_value": "false" }
+          ]
+        },
+        {
+          "name": "tuk_tuk", "id": 32, "color": "#46c8c8", "type": "rectangle",
+          "attributes": [
+            { "id": 16, "name": "occluded_level", "input_type": "select", "mutable": false, "values": ["0", "1", "2", "3"], "default_value": "0" },
+            { "id": 17, "name": "truncated", "input_type": "select", "mutable": false, "values": ["no", "yes"], "default_value": "no" },
+            { "id": 18, "name": "can_review", "input_type": "checkbox", "mutable": false, "values": ["false"], "default_value": "false" }
+          ]
+        },
+        {
+          "name": "bicycle", "id": 33, "color": "#f032e6", "type": "rectangle",
+          "attributes": [
+            { "id": 19, "name": "occluded_level", "input_type": "select", "mutable": false, "values": ["0", "1", "2", "3"], "default_value": "0" },
+            { "id": 20, "name": "truncated", "input_type": "select", "mutable": false, "values": ["no", "yes"], "default_value": "no" },
+            { "id": 21, "name": "can_review", "input_type": "checkbox", "mutable": false, "values": ["false"], "default_value": "false" }
+          ]
+        },
+        {
+          "name": "cyclo", "id": 34, "color": "#9a6324", "type": "rectangle",
+          "attributes": [
+            { "id": 22, "name": "occluded_level", "input_type": "select", "mutable": false, "values": ["0", "1", "2", "3"], "default_value": "0" },
+            { "id": 23, "name": "truncated", "input_type": "select", "mutable": false, "values": ["no", "yes"], "default_value": "no" },
+            { "id": 24, "name": "can_review", "input_type": "checkbox", "mutable": false, "values": ["false"], "default_value": "false" }
+          ]
+        },
+        {
+          "name": "person", "id": 35, "color": "#808000", "type": "rectangle",
+          "attributes": [
+            { "id": 25, "name": "occluded_level", "input_type": "select", "mutable": false, "values": ["0", "1", "2", "3"], "default_value": "0" },
+            { "id": 26, "name": "truncated", "input_type": "select", "mutable": false, "values": ["no", "yes"], "default_value": "no" },
+            { "id": 27, "name": "can_review", "input_type": "checkbox", "mutable": false, "values": ["false"], "default_value": "false" }
+          ]
+        },
+        {
+          "name": "ignore_region", "id": 36, "color": "#808080", "type": "rectangle",
+          "attributes": []
+        }
       ]
 
 spec:
-  description: Ultralytics YOLO26 vehicle detector (car, truck, bus, van)
+  description: Ultralytics YOLO26 detector (vehicles, two-wheelers, person)
   runtime: 'python:3.10'
   handler: main:handler
   eventTimeout: 60s
@@ -25,7 +97,7 @@ spec:
     - name: DEVICE
       value: cpu
     - name: TARGET_LABELS
-      value: car,truck,bus,van
+      value: car,truck,bus,van,motorcycle,bicycle,person,cyclo,tuk_tuk
 
   build:
     image: cvat.ultralytics.yolo26

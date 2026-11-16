@@ -1493,10 +1493,13 @@
   function rangeFromPlayer() {
     // The frame selector is rendered with min={startFrame} max={stopFrame}.
     const input = document.querySelector('.cvat-player-frame-selector input');
-    const minAttr = input?.getAttribute('min');
-    const maxAttr = input?.getAttribute('max');
-    const start = minAttr ? Number(minAttr) : NaN;
-    const stop = maxAttr ? Number(maxAttr) : NaN;
+    const read = (name) => {
+      const v = input?.getAttribute(name);
+      return v === null || v === '' ? NaN : Number(v);
+    };
+    const pick = (...values) => values.find((v) => Number.isFinite(v));
+    const start = pick(read('min'), read('aria-valuemin'));
+    const stop = pick(read('max'), read('aria-valuemax'));
     if (!Number.isFinite(start) || !Number.isFinite(stop) || stop < start) return null;
     return { start, stop };
   }
@@ -1506,7 +1509,9 @@
     try {
       const res = await fetch(`/api/jobs/${state.jobId}`, {
         credentials: 'include',
-        headers: { Accept: 'application/json' },
+        // CVAT's renderer advertises application/vnd.cvat+json; a plain
+        // application/json Accept is rejected with 406.
+        headers: { Accept: 'application/vnd.cvat+json, application/json;q=0.9' },
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const job = await res.json();
