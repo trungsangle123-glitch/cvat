@@ -1,0 +1,20 @@
+services:
+  autoqc:
+    build:
+      context: .
+    image: cvat-autoqc:latest
+    container_name: cvat-autoqc
+    ports:
+      - "58220:8000"
+    environment:
+      AUTOQC_MIN_BOX_SIDE_PX: "12"
+      AUTOQC_DUP_BOX_IOU: "0.90"
+      AUTOQC_PHASH_DIST: "16"
+      AUTOQC_WARN_RATIO_HOLD: "0.10"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    restart: unless-stopped

@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>CVAT Face Landmark-50 — settings</title>
+  <style>
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; padding: 28px; background: #0b1220; color: #e7e9ee;
+      font: 14px/1.5 system-ui, -apple-system, Segoe UI, sans-serif;
+    }
+    main { max-width: 760px; margin: 0 auto; }
+    h1 { font-size: 18px; margin: 0 0 4px; }
+    p.lead { color: #94a3b8; margin: 0 0 20px; }
+    section {
+      background: #111827; border: 1px solid #1f2937; border-radius: 10px;
+      padding: 16px 18px; margin-bottom: 14px;
+    }
+    h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .6px; color: #93c5fd; margin: 0 0 12px; }
+    label { display: block; margin: 10px 0; }
+    label.inline { display: inline-flex; align-items: center; gap: 8px; margin-right: 18px; }
+    input[type="text"], input[type="number"], textarea {
+      width: 100%; background: #0b1220; color: #e7e9ee; border: 1px solid #374151;
+      border-radius: 7px; padding: 8px 10px; font: inherit;
+    }
+    input[type="number"] { width: 120px; }
+    textarea { font: 12px/1.45 ui-monospace, SFMono-Regular, Consolas, monospace; height: 240px; resize: vertical; }
+    .hint { color: #94a3b8; font-size: 12px; margin-top: 6px; }
+    .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 14px; }
+    button {
+      background: #1f2937; color: #e7e9ee; border: 1px solid #374151;
+      border-radius: 7px; padding: 7px 12px; font: inherit; cursor: pointer;
+    }
+    button.primary { background: #0891b2; border-color: #0891b2; color: #fff; font-weight: 600; }
+    button:hover { filter: brightness(1.1); }
+    #status { font-size: 12px; color: #94a3b8; }
+    #status.ok, #saveStatus.ok { color: #4ade80; }
+    #status.err, #saveStatus.err { color: #fca5a5; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 4px 12px; }
+    code { background: #0b1220; padding: 1px 5px; border-radius: 4px; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>CVAT Face Landmark-50</h1>
+  <p class="lead">Self-hosted model endpoint and auto-label options. Settings apply immediately.</p>
+
+  <section>
+    <h2>Model</h2>
+    <label>Endpoint
+      <input type="text" id="endpoint" placeholder="http://localhost:58219/predict">
+      <div class="hint">Your <code>face50-server</code> container. <code>http://localhost:58219/predict</code> by default.</div>
+    </label>
+    <label>Timeout
+      <input type="number" id="timeout" min="10" max="600" step="5"> seconds
+    </label>
+    <div class="row">
+      <button id="test">Test connection</button>
+      <span id="status"></span>
+    </div>
+  </section>
+
+  <section>
+    <h2>Auto-label defaults</h2>
+    <label class="inline"><input type="checkbox" id="replace"> Replace the 7 skeletons on the frame before writing</label>
+    <label class="inline"><input type="checkbox" id="previewOnly"> Preview only (do not write)</label>
+    <label class="inline"><input type="checkbox" id="showIds"> Draw point ids on the overlay</label>
+    <div class="hint">Rule from the guideline: each frame still has to be reviewed; the model only produces the pre-label.</div>
+  </section>
+
+  <section>
+    <h2>Skeletons</h2>
+    <div class="grid" id="groups"></div>
+  </section>
+
+  <section>
+    <h2>Task labels (one-time setup)</h2>
+    <div class="hint">
+      The job must contain these 7 skeleton labels, with sublabels <code>p0</code> … <code>p49</code>.
+      Paste this JSON in CVAT: <em>task → Raw</em> label editor, or run
+      <code>python face50-server/tools/setup_task.py --task-id N --apply</code>.
+    </div>
+    <div class="row">
+      <button id="copy">Copy labels JSON</button>
+      <button id="download">Download labels_raw.json</button>
+    </div>
+    <textarea id="labels" spellcheck="false" readonly></textarea>
+  </section>
+
+  <div class="row">
+    <button class="primary" id="save">Save</button>
+    <button id="reset">Reset defaults</button>
+    <span id="saveStatus" class="hint"></span>
+  </div>
+</main>
+<script src="options.js"></script>
+</body>
+</html>

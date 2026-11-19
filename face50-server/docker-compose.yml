@@ -1,0 +1,34 @@
+services:
+  face50:
+    build:
+      context: .
+      args:
+        # 1 = also install InsightFace (needed for FACE50_BACKEND=insight106)
+        FACE50_WITH_INSIGHTFACE: "1"
+    image: cvat-face50:latest
+    container_name: cvat-face50
+    ports:
+      - "58219:8000"
+    # Mount the InsightFace pack (read-only) when using the insight106 backend:
+    volumes:
+      - ./models/insightface:/app/models/insightface:ro
+    environment:
+      # strict=1 follows guideline 3.1 literally: below the visible threshold
+      # the whole skeleton is written as Outside. strict=0 writes Occluded instead.
+      FACE50_STRICT: "1"
+      FACE50_FAR_SIDE_START: "0.45"
+      FACE50_FAR_SIDE_FULL: "0.85"
+      FACE50_MIN_DETECTION: "0.4"
+      # Fall back to the offline MediaPipe backend by setting "facemesh" here.
+      FACE50_BACKEND: "insight106"
+      FACE50_INSIGHTFACE_ROOT: "/app/models/insightface"
+      # FACE50_INSIGHTFACE_PACK: "buffalo_l"
+      # FACE50_BACKEND: "tasks"
+      # FACE50_MODEL_PATH: "/app/models/face_landmarker.task"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request;urllib.request.urlopen('http://127.0.0.1:8000/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped

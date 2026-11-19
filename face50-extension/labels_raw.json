@@ -1,0 +1,365 @@
+[
+  {
+    "name": "longmaytrai",
+    "color": "#e11d48",
+    "type": "skeleton",
+    "attributes": [],
+    "svg": "<circle data-type=\"element\" data-element-id=\"0\" data-node-id=\"0\" data-label-name=\"p0\" cx=\"20.0\" cy=\"33.0\" r=\"0.8\" fill=\"#e11d48\" stroke=\"black\" stroke-width=\"0.1\" /><circle data-type=\"element\" data-element-id=\"1\" data-node-id=\"1\" data-label-name=\"p1\" cx=\"24.0\" cy=\"30.0\" r=\"0.8\" fill=\"#e11d48\" stroke=\"black\" stroke-width=\"0.1\" /><circle data-type=\"element\" data-element-id=\"2\" data-node-id=\"2\" data-label-name=\"p2\" cx=\"29.0\" cy=\"28.5\" r=\"0.8\" fill=\"#e11d48\" stroke=\"black\" stroke-width=\"0.1\" /><circle data-type=\"element\" data-element-id=\"3\" data-node-id=\"3\" data-label-name=\"p3\" cx=\"34.0\" cy=\"29.0\" r=\"0.8\" fill=\"#e11d48\" stroke=\"black\" stroke-width=\"0.1\" /><circle data-type=\"element\" data-element-id=\"4\" data-node-id=\"4\" data-label-name=\"p4\" cx=\"38.0\" cy=\"31.0\" r=\"0.8\" fill=\"#e11d48\" stroke=\"black\" stroke-width=\"0.1\" /><line data-type=\"edge\" data-node-from=\"0\" data-node-to=\"1\" x1=\"20.0\" y1=\"33.0\" x2=\"24.0\" y2=\"30.0\" stroke=\"black\" stroke-width=\"0.5\" /><line data-type=\"edge\" data-node-from=\"1\" data-node-to=\"2\" x1=\"24.0\" y1=\"30.0\" x2=\"29.0\" y2=\"28.5\" stroke=\"black\" stroke-width=\"0.5\" /><line data-type=\"edge\" data-node-from=\"2\" data-node-to=\"3\" x1=\"29.0\" y1=\"28.5\" x2=\"34.0\" y2=\"29.0\" stroke=\"black\" stroke-width=\"0.5\" /><line data-type=\"edge\" data-node-from=\"3\" data-node-to=\"4\" x1=\"34.0\" y1=\"29.0\" x2=\"38.0\" y2=\"31.0\" stroke=\"black\" stroke-width=\"0.5\" />",
+    "sublabels": [
+      {
+        "name": "p0",
+        "color": "#e11d48",
+        "type": "points",
+        "attributes": []
+      },
+      {
+        "name": "p1",
+        "color": "#e11d48",
+        "type": "points",
+        "attributes": []
+      },
+      {
+        "name": "p2",
+        "color": "#e11d48",
+        "type": "points",
+        "attributes": []
+      },
+      {
+        "name": "p3",
+        "color": "#e11d48",
+        "type": "points",
+        "attributes": []
+      },
+      {
+        "name": "p4",
+        "color": "#e11d48",
+        "type": "points",
+        "attributes": []
+      }
+    ]
+  },
+  {
+    "name": "longmayphai",
+    "color": "#f97316",
+    "type": "skeleton",
+    "attributes": [],
+    "svg": "<circle data-type=\"element\" data-element-id=\"5\" data-node-id=\"5\" data-label-name=\"p5\" cx=\"62.0\" cy=\"31.0\" r=\"0.8\" fill=\"#f97316\" stroke=\"black\" stroke-width=\"0.1\" /><circle data-type=\"element\" data-element-id=\"6\" data-node-id=\"6\" data-label-name=\"p6\" cx=\"66.0\" cy=\"29.0\" r=\"0.8\" fill=\"#f97316\" stroke=\"black\" stroke-width=\"0.1\" /><circle data-type=\"element\" data-element-id=\"7\" data-node-id=\"7\" data-label-name=\"p7\" cx=\"71.0\" cy=\"28.5\" r=\"0.8\" fill=\"#f97316\" stroke=\"black\" stroke-width=\"0.1\" /><circle data-type=\"element\" data-element-id=\"8\" data-node-id=\"8\" data-label-name=\"p8\" cx=\"76.0\" cy=\"30.0\" r=\"0.8\" fill=\"#f97316\" stroke=\"black\" stroke-width=\"0.1\" /><circle data-type=\"element\" data-element-id=\"9\" data-node-id=\"9\" data-label-name=\"p9\" cx=\"80.0\" cy=\"33.0\" r=\"0.8\" fill=\"#f97316\" stroke=\"black\" stroke-width=\"0.1\" /><line data-type=\"edge\" data-node-from=\"5\" data-node-to=\"6\" x1=\"62.0\" y1=\"31.0\" x2=\"66.0\" y2=\"29.0\" stroke=\"black\" stroke-width=\"0.5\" /><line data-type=\"edge\" data-node-from=\"6\" data-node-to=\"7\" x1=\"66.0\" y1=\"29.0\" x2=\"71.0\" y2=\"28.5\" stroke=\"black\" stroke-width=\"0.5\" /><line data-type=\"edge\" data-node-from=\"7\" data-node-to=\"8\" x1=\"71.0\" y1=\"28.5\" x2=\"76.0\" y2=\"30.0\" stroke=\"black\" stroke-width=\"0.5\" /><line data-type=\"edge\" data-node-from=\"8\" data-node-to=\"9\" x1=\"76.0\" y1=\"30.0\" x2=\"80.0\" y2=\"33.0\" stroke=\"black\" stroke-width=\"0.5\" />",
+    "sublabels": [
+      {
+        "name": "p5",
+        "color": "#f97316",
+        "type": "points",
+        "attributes": []
+      },
+      {
+        "name": "p6",
+        "color": "#f97316",
+        "type": "points",
+        "attributes": []
+      },
+      {
+        "name": "p7",
+        "color": "#f97316",
+        "type": "points",
+        "attributes": []
+      },
+      {
+        "name": "p8",
+        "color": "#f97316",
+        "type": "points",
+        "attributes": []
+      },
+      {
+        "name": "p9",
+        "color": "#f97316",
+        "type": "points",
+        "attributes": []
+      }
+    ]
+  },
+  {
+    "name": "songmui",
+    "color": "#eab308",
+    "type": "skeleton",
+    "attributes": [],
+    "svg": "<circle data-type=\"element\" data-element-id=\"10\" data-node-id=\"10\" data-label-name=\"p10\" cx=\"50.0\" cy=\"36.0\" r=\"0.8\" fill=\"#eab308\" stroke=\"black\" stroke-width=\"0.1\" /><circle data-type=\"element\" data-element-id=\"11\" data-node-id=\"11\" data-label-name=\"p11\" cx=\"49.5\" cy=\"43.0\" r=\"0.8\" fill=\"#eab308\" stroke=\"black\" stroke-width=\"0.1\" /><circle data-type=\"element\" data-element-id=\"12\" data-node-id=\"12\" data-label-name=\"p12\" cx=\"49.0\" cy=\"50.0\" r=\"0.8\" fill=\"#eab308\" stroke=\"black\" stroke-width=\"0.1\" /><circle data-type=\"element\" data-element-id=\"13\" data-node-id=\"13\" data-label-name=\"p13\" cx=\"48.5\" cy=\"57.0\" r=\"0.8\" fill=\"#eab308\" stroke=\"black\" stroke-width=\"0.1\" /><line data-type=\"edge\" data-node-from=\"10\" data-node-to=\"11\" x1=\"50.0\" y1=\"36.0\" x2=\"49.5\" y2=\"43.0\" stroke=\"black\" stroke-width=\"0.5\" /><line data-type=\"edge\" data-node-from=\"11\" data-node-to=\"12\" x1=\"49.5\" y1=\"43.0\" x2=\"49.0\" y2=\"50.0\" stroke=\"black\" stroke-width=\"0.5\" /><line data-type=\"edge\" data-node-from=\"12\" data-node-to=\"13\" x1=\"49.0\" y1=\"50.0\" x2=\"48.5\" y2=\"57.0\" stroke=\"black\" stroke-width=\"0.5\" />",
+    "sublabels": [
+      {
+        "name": "p10",
+        "color": "#eab308",
+        "type": "points",
+        "attributes": []
+      },
+      {
+        "name": "p11",
+        "color": "#eab308",
+        "type": "points",
+        "attributes": []
+      },
+      {
+        "name": "p12",
+        "color": "#eab308",
+        "type": "points",
+        "attributes": []
+      },
+      {
+        "name": "p13",
+        "color": "#eab308",
+        "type": "points",
+        "attributes": []
+      }
+    ]
+  },
+  {
+    "name": "mattrai",
+    "color": "#22c55e",
+    "type": "skeleton",
+    "attributes": [],
+    "svg": "<circle data-type=\"element\" data-element-id=\"14\" data-node-id=\"14\" data-label-name=\"p14\" cx=\"22.0\" cy=\"42.0\" r=\"0.8\" fill=\"#22c55e\" stroke=\"black\" stroke-width=\"0.1\" /><circle data-type=\"element\" data-element-id=\"15\" data-node-id=\"15\" data-label-name=\"p15\" cx=\"24.34\" cy=\"44.83\" r=\"0.8\" fill=\"#22c55e\" stroke=\"black\" stroke-width=\"0.1\" /><circle data-type=\"element\" data-element-id=\"16\" data-node-id=\"16\" data-label-name=\"p16\" cx=\"30.0\" cy=\"46.0\" r=\"0.8\" fill=\"#22c55e\" stroke=\"black\" stroke-width=\"0.1\" /><circle data-type=\"element\" data-element-id=\"17\" data-node-id=\"17\" data-label-name=\"p17\" cx=\"35.66\" cy=\"44.83\" r=\"0.8\" fill=\"#22c55e\" stroke=\"black\" stroke-width=\"0.1\" /><circle data-type=\"element\" data-element-id=\"18\" data-node-id=\"18\" data-label-name=\"p18\" cx=\"38.0\" cy=\"42.0\" r=\"0.8\" fill=\"#22c55e\" stroke=\"black\" stroke-width=\"0.1\" /><circle data-type=\"element\" data-element-id=\"19\" data-node-id=\"19\" data-label-name=\"p19\" cx=\"35.66\" cy=\"39.17\" r=\"0.8\" fill=\"#22c55e\" stroke=\"black\" stroke-width=\"0.1\" /><circle data-type=\"element\" data-element-id=\"20\" data-node-id=\"20\" data-label-name=\"p20\" cx=\"30.0\" cy=\"38.0\" r=\"0.8\" fill=\"#22c55e\" stroke=\"black\" stroke-width=\"0.1\" /><circle data-type=\"element\" data-element-id=\"21\" data-node-id=\"21\" data-label-name=\"p21\" cx=\"24.34\" cy=\"39.17\" r=\"0.8\" fill=\"#22c55e\" stroke=\"black\" stroke-width=\"0.1\" /><line data-type=\"edge\" data-node-from=\"14\" data-node-to=\"15\" x1=\"22.0\" y1=\"42.0\" x2=\"24.34\" y2=\"44.83\" stroke=\"black\" stroke-width=\"0.5\" /><line data-type=\"edge\" data-node-from=\"15\" data-node-to=\"16\" x1=\"24.34\" y1=\"44.83\" x2=\"30.0\" y2=\"46.0\" stroke=\"black\" stroke-width=\"0.5\" /><line data-type=\"edge\" data-node-from=\"16\" data-node-to=\"17\" x1=\"30.0\" y1=\"46.0\" x2=\"35.66\" y2=\"44.83\" stroke=\"black\" stroke-width=\"0.5\" /><line data-type=\"edge\" data-node-from=\"17\" data-node-to=\"18\" x1=\"35.66\" y1=\"44.83\" x2=\"38.0\" y2=\"42.0\" stroke=\"black\" stroke-width=\"0.5\" /><line data-type=\"edge\" data-node-from=\"18\" data-node-to=\"19\" x1=\"38.0\" y1=\"42.0\" x2=\"35.66\" y2=\"39.17\" stroke=\"black\" stroke-width=\"0.5\" /><line data-type=\"edge\" data-node-from=\"19\" data-node-to=\"20\" x1=\"35.66\" y1=\"39.17\" x2=\"30.0\" y2=\"38.0\" stroke=\"black\" stroke-width=\"0.5\" /><line data-type=\"edge\" data-node-from=\"20\" data-node-to=\"21\" x1=\"30.0\" y1=\"38.0\" x2=\"24.34\" y2=\"39.17\" stroke=\"black\" stroke-width=\"0.5\" /><line data-type=\"edge\" data-node-from=\"21\" data-node-to=\"14\" x1=\"24.34\" y1=\"39.17\" x2=\"22.0\" y2=\"42.0\" stroke=\"black\" stroke-width=\"0.5\" />",
+    "sublabels": [
+      {
+        "name": "p14",
+        "color": "#22c55e",
+        "type": "points",
+        "attributes": []
+      },
+      {
+        "name": "p15",
+        "color": "#22c55e",
+        "type": "points",
+        "attributes": []
+      },
+      {
+        "name": "p16",
+        "color": "#22c55e",
+        "type": "points",
+        "attributes": []
+      },
+      {
+        "name": "p17",
+        "color": "#22c55e",
+        "type": "points",
+        "attributes": []
+      },
+      {
+        "name": "p18",
+        "color": "#22c55e",
+        "type": "points",
+        "attributes": []
+      },
+      {
+        "name": "p19",
+        "color": "#22c55e",
+        "type": "points",
+        "attributes": []
+      },
+      {
+        "name": "p20",
+        "color": "#22c55e",
+        "type": "points",
+        "attributes": []
+      },
+      {
+        "name": "p21",
+        "color": "#22c55e",
+        "type": "points",
+        "attributes": []
+      }
+    ]
+  },
+  {
+    "name": "matphai",
+    "color": "#14b8a6",
+    "type": "skeleton",
+    "attributes": [],
+    "svg": "<circle data-type=\"element\" data-element-id=\"22\" data-node-id=\"22\" data-label-name=\"p22\" cx=\"62.0\" cy=\"42.0\" r=\"0.8\" fill=\"#14b8a6\" stroke=\"black\" stroke-width=\"0.1\" /><circle data-type=\"element\" data-element-id=\"23\" data-node-id=\"23\" data-label-name=\"p23\" cx=\"64.34\" cy=\"44.83\" r=\"0.8\" fill=\"#14b8a6\" stroke=\"black\" stroke-width=\"0.1\" /><circle data-type=\"element\" data-element-id=\"24\" data-node-id=\"24\" data-label-name=\"p24\" cx=\"70.0\" cy=\"46.0\" r=\"0.8\" fill=\"#14b8a6\" stroke=\"black\" stroke-width=\"0.1\" /><circle data-type=\"element\" data-element-id=\"25\" data-node-id=\"25\" data-label-name=\"p25\" cx=\"75.66\" cy=\"44.83\" r=\"0.8\" fill=\"#14b8a6\" stroke=\"black\" stroke-width=\"0.1\" /><circle data-type=\"element\" data-element-id=\"26\" data-node-id=\"26\" data-label-name=\"p26\" cx=\"78.0\" cy=\"42.0\" r=\"0.8\" fill=\"#14b8a6\" stroke=\"black\" stroke-width=\"0.1\" /><circle data-type=\"element\" data-element-id=\"27\" data-node-id=\"27\" data-label-name=\"p27\" cx=\"75.66\" cy=\"39.17\" r=\"0.8\" fill=\"#14b8a6\" stroke=\"black\" stroke-width=\"0.1\" /><circle data-type=\"element\" data-element-id=\"28\" data-node-id=\"28\" data-label-name=\"p28\" cx=\"70.0\" cy=\"38.0\" r=\"0.8\" fill=\"#14b8a6\" stroke=\"black\" stroke-width=\"0.1\" /><circle data-type=\"element\" data-element-id=\"29\" data-node-id=\"29\" data-label-name=\"p29\" cx=\"64.34\" cy=\"39.17\" r=\"0.8\" fill=\"#14b8a6\" stroke=\"black\" stroke-width=\"0.1\" /><line data-type=\"edge\" data-node-from=\"22\" data-node-to=\"23\" x1=\"62.0\" y1=\"42.0\" x2=\"64.34\" y2=\"44.83\" stroke=\"black\" stroke-width=\"0.5\" /><line data-type=\"edge\" data-node-from=\"23\" data-node-to=\"24\" x1=\"64.34\" y1=\"44.83\" x2=\"70.0\" y2=\"46.0\" stroke=\"black\" stroke-width=\"0.5\" /><line data-type=\"edge\" data-node-from=\"24\" data-node-to=\"25\" x1=\"70.0\" y1=\"46.0\" x2=\"75.66\" y2=\"44.83\" stroke=\"black\" stroke-width=\"0.5\" /><line data-type=\"edge\" data-node-from=\"25\" data-node-to=\"26\" x1=\"75.66\" y1=\"44.83\" x2=\"78.0\" y2=\"42.0\" stroke=\"black\" stroke-width=\"0.5\" /><line data-type=\"edge\" data-node-from=\"26\" data-node-to=\"27\" x1=\"78.0\" y1=\"42.0\" x2=\"75.66\" y2=\"39.17\" stroke=\"black\" stroke-width=\"0.5\" /><line data-type=\"edge\" data-node-from=\"27\" data-node-to=\"28\" x1=\"75.66\" y1=\"39.17\" x2=\"70.0\" y2=\"38.0\" stroke=\"black\" stroke-width=\"0.5\" /><line data-type=\"edge\" data-node-from=\"28\" data-node-to=\"29\" x1=\"70.0\" y1=\"38.0\" x2=\"64.34\" y2=\"39.17\" stroke=\"black\" stroke-width=\"0.5\" /><line data-type=\"edge\" data-node-from=\"29\" data-node-to=\"22\" x1=\"64.34\" y1=\"39.17\" x2=\"62.0\" y2=\"42.0\" stroke=\"black\" stroke-width=\"0.5\" />",
+    "sublabels": [
+      {
+        "name": "p22",
+        "color": "#14b8a6",
+        "type": "points",
+        "attributes": []
+      },
+      {
+        "name": "p23",
+        "color": "#14b8a6",
+        "type": "points",
+        "attributes": []
+      },
+      {
+        "name": "p24",
+        "color": "#14b8a6",
+        "type": "points",
+        "attributes": []
+      },
+      {
+        "name": "p25",
+        "color": "#14b8a6",
+        "type": "points",
+        "attributes": []
+      },
+      {
+        "name": "p26",
+        "color": "#14b8a6",
+        "type": "points",
+        "attributes": []
+      },
+      {
+        "name": "p27",
+        "color": "#14b8a6",
+        "type": "points",
+        "attributes": []
+      },
+      {
+        "name": "p28",
+        "color": "#14b8a6",
+        "type": "points",
+        "attributes": []
+      },
+      {
+        "name": "p29",
+        "color": "#14b8a6",
+        "type": "points",
+        "attributes": []
+      }
+    ]
+  },
+  {
+    "name": "moingoai",
+    "color": "#3b82f6",
+    "type": "skeleton",
+    "attributes": [],
+    "svg": "<circle data-type=\"element\" data-element-id=\"30\" data-node-id=\"30\" data-label-name=\"p30\" cx=\"37.0\" cy=\"72.0\" r=\"0.8\" fill=\"#3b82f6\" stroke=\"black\" stroke-width=\"0.1\" /><circle data-type=\"element\" data-element-id=\"31\" data-node-id=\"31\" data-label-name=\"p31\" cx=\"38.74\" cy=\"75.25\" r=\"0.8\" fill=\"#3b82f6\" stroke=\"black\" stroke-width=\"0.1\" /><circle data-type=\"element\" data-element-id=\"32\" data-node-id=\"32\" data-label-name=\"p32\" cx=\"43.5\" cy=\"77.63\" r=\"0.8\" fill=\"#3b82f6\" stroke=\"black\" stroke-width=\"0.1\" /><circle data-type=\"element\" data-element-id=\"33\" data-node-id=\"33\" data-label-name=\"p33\" cx=\"50.0\" cy=\"78.5\" r=\"0.8\" fill=\"#3b82f6\" stroke=\"black\" stroke-width=\"0.1\" /><circle data-type=\"element\" data-element-id=\"34\" data-node-id=\"34\" data-label-name=\"p34\" cx=\"56.5\" cy=\"77.63\" r=\"0.8\" fill=\"#3b82f6\" stroke=\"black\" stroke-width=\"0.1\" /><circle data-type=\"element\" data-element-id=\"35\" data-node-id=\"35\" data-label-name=\"p35\" cx=\"61.26\" cy=\"75.25\" r=\"0.8\" fill=\"#3b82f6\" stroke=\"black\" stroke-width=\"0.1\" /><circle data-type=\"element\" data-element-id=\"36\" data-node-id=\"36\" data-label-name=\"p36\" cx=\"63.0\" cy=\"72.0\" r=\"0.8\" fill=\"#3b82f6\" stroke=\"black\" stroke-width=\"0.1\" /><circle data-type=\"element\" data-element-id=\"37\" data-node-id=\"37\" data-label-name=\"p37\" cx=\"61.26\" cy=\"68.75\" r=\"0.8\" fill=\"#3b82f6\" stroke=\"black\" stroke-width=\"0.1\" /><circle data-type=\"element\" data-element-id=\"38\" data-node-id=\"38\" data-label-name=\"p38\" cx=\"56.5\" cy=\"66.37\" r=\"0.8\" fill=\"#3b82f6\" stroke=\"black\" stroke-width=\"0.1\" /><circle data-type=\"element\" data-element-id=\"39\" data-node-id=\"39\" data-label-name=\"p39\" cx=\"50.0\" cy=\"65.5\" r=\"0.8\" fill=\"#3b82f6\" stroke=\"black\" stroke-width=\"0.1\" /><circle data-type=\"element\" data-element-id=\"40\" data-node-id=\"40\" data-label-name=\"p40\" cx=\"43.5\" cy=\"66.37\" r=\"0.8\" fill=\"#3b82f6\" stroke=\"black\" stroke-width=\"0.1\" /><circle data-type=\"element\" data-element-id=\"41\" data-node-id=\"41\" data-label-name=\"p41\" cx=\"38.74\" cy=\"68.75\" r=\"0.8\" fill=\"#3b82f6\" stroke=\"black\" stroke-width=\"0.1\" /><line data-type=\"edge\" data-node-from=\"30\" data-node-to=\"31\" x1=\"37.0\" y1=\"72.0\" x2=\"38.74\" y2=\"75.25\" stroke=\"black\" stroke-width=\"0.5\" /><line data-type=\"edge\" data-node-from=\"31\" data-node-to=\"32\" x1=\"38.74\" y1=\"75.25\" x2=\"43.5\" y2=\"77.63\" stroke=\"black\" stroke-width=\"0.5\" /><line data-type=\"edge\" data-node-from=\"32\" data-node-to=\"33\" x1=\"43.5\" y1=\"77.63\" x2=\"50.0\" y2=\"78.5\" stroke=\"black\" stroke-width=\"0.5\" /><line data-type=\"edge\" data-node-from=\"33\" data-node-to=\"34\" x1=\"50.0\" y1=\"78.5\" x2=\"56.5\" y2=\"77.63\" stroke=\"black\" stroke-width=\"0.5\" /><line data-type=\"edge\" data-node-from=\"34\" data-node-to=\"35\" x1=\"56.5\" y1=\"77.63\" x2=\"61.26\" y2=\"75.25\" stroke=\"black\" stroke-width=\"0.5\" /><line data-type=\"edge\" data-node-from=\"35\" data-node-to=\"36\" x1=\"61.26\" y1=\"75.25\" x2=\"63.0\" y2=\"72.0\" stroke=\"black\" stroke-width=\"0.5\" /><line data-type=\"edge\" data-node-from=\"36\" data-node-to=\"37\" x1=\"63.0\" y1=\"72.0\" x2=\"61.26\" y2=\"68.75\" stroke=\"black\" stroke-width=\"0.5\" /><line data-type=\"edge\" data-node-from=\"37\" data-node-to=\"38\" x1=\"61.26\" y1=\"68.75\" x2=\"56.5\" y2=\"66.37\" stroke=\"black\" stroke-width=\"0.5\" /><line data-type=\"edge\" data-node-from=\"38\" data-node-to=\"39\" x1=\"56.5\" y1=\"66.37\" x2=\"50.0\" y2=\"65.5\" stroke=\"black\" stroke-width=\"0.5\" /><line data-type=\"edge\" data-node-from=\"39\" data-node-to=\"40\" x1=\"50.0\" y1=\"65.5\" x2=\"43.5\" y2=\"66.37\" stroke=\"black\" stroke-width=\"0.5\" /><line data-type=\"edge\" data-node-from=\"40\" data-node-to=\"41\" x1=\"43.5\" y1=\"66.37\" x2=\"38.74\" y2=\"68.75\" stroke=\"black\" stroke-width=\"0.5\" /><line data-type=\"edge\" data-node-from=\"41\" data-node-to=\"30\" x1=\"38.74\" y1=\"68.75\" x2=\"37.0\" y2=\"72.0\" stroke=\"black\" stroke-width=\"0.5\" />",
+    "sublabels": [
+      {
+        "name": "p30",
+        "color": "#3b82f6",
+        "type": "points",
+        "attributes": []
+      },
+      {
+        "name": "p31",
+        "color": "#3b82f6",
+        "type": "points",
+        "attributes": []
+      },
+      {
+        "name": "p32",
+        "color": "#3b82f6",
+        "type": "points",
+        "attributes": []
+      },
+      {
+        "name": "p33",
+        "color": "#3b82f6",
+        "type": "points",
+        "attributes": []
+      },
+      {
+        "name": "p34",
+        "color": "#3b82f6",
+        "type": "points",
+        "attributes": []
+      },
+      {
+        "name": "p35",
+        "color": "#3b82f6",
+        "type": "points",
+        "attributes": []
+      },
+      {
+        "name": "p36",
+        "color": "#3b82f6",
+        "type": "points",
+        "attributes": []
+      },
+      {
+        "name": "p37",
+        "color": "#3b82f6",
+        "type": "points",
+        "attributes": []
+      },
+      {
+        "name": "p38",
+        "color": "#3b82f6",
+        "type": "points",
+        "attributes": []
+      },
+      {
+        "name": "p39",
+        "color": "#3b82f6",
+        "type": "points",
+        "attributes": []
+      },
+      {
+        "name": "p40",
+        "color": "#3b82f6",
+        "type": "points",
+        "attributes": []
+      },
+      {
+        "name": "p41",
+        "color": "#3b82f6",
+        "type": "points",
+        "attributes": []
+      }
+    ]
+  },
+  {
+    "name": "moitrong",
+    "color": "#a855f7",
+    "type": "skeleton",
+    "attributes": [],
+    "svg": "<circle data-type=\"element\" data-element-id=\"42\" data-node-id=\"42\" data-label-name=\"p42\" cx=\"43.0\" cy=\"72.0\" r=\"0.8\" fill=\"#a855f7\" stroke=\"black\" stroke-width=\"0.1\" /><circle data-type=\"element\" data-element-id=\"43\" data-node-id=\"43\" data-label-name=\"p43\" cx=\"45.05\" cy=\"74.26\" r=\"0.8\" fill=\"#a855f7\" stroke=\"black\" stroke-width=\"0.1\" /><circle data-type=\"element\" data-element-id=\"44\" data-node-id=\"44\" data-label-name=\"p44\" cx=\"50.0\" cy=\"75.2\" r=\"0.8\" fill=\"#a855f7\" stroke=\"black\" stroke-width=\"0.1\" /><circle data-type=\"element\" data-element-id=\"45\" data-node-id=\"45\" data-label-name=\"p45\" cx=\"54.95\" cy=\"74.26\" r=\"0.8\" fill=\"#a855f7\" stroke=\"black\" stroke-width=\"0.1\" /><circle data-type=\"element\" data-element-id=\"46\" data-node-id=\"46\" data-label-name=\"p46\" cx=\"57.0\" cy=\"72.0\" r=\"0.8\" fill=\"#a855f7\" stroke=\"black\" stroke-width=\"0.1\" /><circle data-type=\"element\" data-element-id=\"47\" data-node-id=\"47\" data-label-name=\"p47\" cx=\"54.95\" cy=\"69.74\" r=\"0.8\" fill=\"#a855f7\" stroke=\"black\" stroke-width=\"0.1\" /><circle data-type=\"element\" data-element-id=\"48\" data-node-id=\"48\" data-label-name=\"p48\" cx=\"50.0\" cy=\"68.8\" r=\"0.8\" fill=\"#a855f7\" stroke=\"black\" stroke-width=\"0.1\" /><circle data-type=\"element\" data-element-id=\"49\" data-node-id=\"49\" data-label-name=\"p49\" cx=\"45.05\" cy=\"69.74\" r=\"0.8\" fill=\"#a855f7\" stroke=\"black\" stroke-width=\"0.1\" /><line data-type=\"edge\" data-node-from=\"42\" data-node-to=\"43\" x1=\"43.0\" y1=\"72.0\" x2=\"45.05\" y2=\"74.26\" stroke=\"black\" stroke-width=\"0.5\" /><line data-type=\"edge\" data-node-from=\"43\" data-node-to=\"44\" x1=\"45.05\" y1=\"74.26\" x2=\"50.0\" y2=\"75.2\" stroke=\"black\" stroke-width=\"0.5\" /><line data-type=\"edge\" data-node-from=\"44\" data-node-to=\"45\" x1=\"50.0\" y1=\"75.2\" x2=\"54.95\" y2=\"74.26\" stroke=\"black\" stroke-width=\"0.5\" /><line data-type=\"edge\" data-node-from=\"45\" data-node-to=\"46\" x1=\"54.95\" y1=\"74.26\" x2=\"57.0\" y2=\"72.0\" stroke=\"black\" stroke-width=\"0.5\" /><line data-type=\"edge\" data-node-from=\"46\" data-node-to=\"47\" x1=\"57.0\" y1=\"72.0\" x2=\"54.95\" y2=\"69.74\" stroke=\"black\" stroke-width=\"0.5\" /><line data-type=\"edge\" data-node-from=\"47\" data-node-to=\"48\" x1=\"54.95\" y1=\"69.74\" x2=\"50.0\" y2=\"68.8\" stroke=\"black\" stroke-width=\"0.5\" /><line data-type=\"edge\" data-node-from=\"48\" data-node-to=\"49\" x1=\"50.0\" y1=\"68.8\" x2=\"45.05\" y2=\"69.74\" stroke=\"black\" stroke-width=\"0.5\" /><line data-type=\"edge\" data-node-from=\"49\" data-node-to=\"42\" x1=\"45.05\" y1=\"69.74\" x2=\"43.0\" y2=\"72.0\" stroke=\"black\" stroke-width=\"0.5\" />",
+    "sublabels": [
+      {
+        "name": "p42",
+        "color": "#a855f7",
+        "type": "points",
+        "attributes": []
+      },
+      {
+        "name": "p43",
+        "color": "#a855f7",
+        "type": "points",
+        "attributes": []
+      },
+      {
+        "name": "p44",
+        "color": "#a855f7",
+        "type": "points",
+        "attributes": []
+      },
+      {
+        "name": "p45",
+        "color": "#a855f7",
+        "type": "points",
+        "attributes": []
+      },
+      {
+        "name": "p46",
+        "color": "#a855f7",
+        "type": "points",
+        "attributes": []
+      },
+      {
+        "name": "p47",
+        "color": "#a855f7",
+        "type": "points",
+        "attributes": []
+      },
+      {
+        "name": "p48",
+        "color": "#a855f7",
+        "type": "points",
+        "attributes": []
+      },
+      {
+        "name": "p49",
+        "color": "#a855f7",
+        "type": "points",
+        "attributes": []
+      }
+    ]
+  }
+]

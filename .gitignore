@@ -81,3 +81,6 @@ cvat-ui/dist
 **/!.yarn/releases
 **/!.yarn/sdks
 **/!.yarn/versions
+
+# local model packs (insightface buffalo_l, mediapipe .task files)
+face50-server/models/
